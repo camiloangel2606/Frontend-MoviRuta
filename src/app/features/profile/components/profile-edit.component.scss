@@ -1,0 +1,233 @@
+// Variables CSS para tema moderno
+$primary-color: var(--color-primary);
+$text-color: var(--text-primary);
+$text-light: var(--text-secondary);
+$bg-color: var(--bg-secondary);
+$card-bg: var(--bg-card);
+$glass-bg: var(--bg-glass);
+$border-color: var(--border-color);
+$border-glass: var(--border-glass);
+
+.profile-edit-container {
+  margin-top: 24px;
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  background: $glass-bg;
+  backdrop-filter: blur(var(--blur-sm));
+  border: 1px solid $border-glass;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  
+  // Accent line
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: 4px 0 0 4px;
+  }
+
+  h3 {
+    margin: 0 0 24px;
+    color: $text-color;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  label {
+    font-weight: 600;
+    color: $text-color;
+    font-size: 14px;
+    letter-spacing: 0.2px;
+  }
+
+  input {
+    padding: 14px 16px;
+    border: 2px solid $border-color;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-family: inherit;
+    background: $card-bg;
+    color: $text-color;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 4px rgba(21, 101, 192, 0.15);
+    }
+
+    &:disabled {
+      background: $bg-color;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    &::placeholder {
+      color: $text-light;
+      opacity: 0.7;
+    }
+  }
+
+  small {
+    font-size: 12px;
+    color: $text-light;
+  }
+}
+
+.error-text {
+  color: var(--color-danger);
+  font-size: 12px;
+  margin-top: 6px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.photo-preview {
+  margin-top: 16px;
+  padding: 16px;
+  border: 2px dashed rgba($border-color, 0.5);
+  border-radius: var(--radius-md);
+  background: rgba($card-bg, 0.5);
+  text-align: center;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: $primary-color;
+    background: rgba($primary-color, 0.03);
+  }
+
+  img {
+    width: 100%;
+    max-width: 200px;
+    height: auto;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.alert {
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeIn 0.4s ease;
+
+  &.alert-error {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(248, 113, 113, 0.08));
+    color: var(--color-danger);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+  }
+
+  &.alert-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(52, 211, 153, 0.08));
+    color: var(--color-secondary);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.btn {
+  padding: 14px 24px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+  }
+
+  &.btn-primary {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 4px 15px rgba(21, 101, 192, 0.3);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(21, 101, 192, 0.4);
+      
+      &::before {
+        left: 100%;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+  }
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 20px;
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba($border-color, 0.3);
+    border-top: 4px solid $primary-color;
+    border-radius: 50%;
+    animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  p {
+    color: $text-light;
+    margin: 0;
+    font-weight: 500;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

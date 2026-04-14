@@ -1,0 +1,120 @@
+<div class="sessions-container">
+  <!-- Header -->
+  <div class="sessions-header">
+    <h2>🖥️ Mis Dispositivos Conectados</h2>
+    <p class="sessions-subtitle">
+      Gestiona las sesiones activas en tus dispositivos
+    </p>
+  </div>
+
+  <!-- Mensajes -->
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <p>❌ {{ errorMessage }}</p>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    <p>✅ {{ successMessage }}</p>
+  </div>
+
+  <!-- Estado de Carga -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Cargando sesiones...</p>
+  </div>
+
+  <!-- Lista de Sesiones -->
+  <div class="sessions-list" *ngIf="!loading && sessions.length > 0">
+    <div 
+      class="session-card"
+      *ngFor="let session of sessions"
+      [class.current-session]="isCurrentSession(session)"
+    >
+      <!-- Icono del dispositivo -->
+      <div class="session-icon">
+        <span *ngIf="isCurrentSession(session)">📱</span>
+        <span *ngIf="!isCurrentSession(session)">💻</span>
+      </div>
+
+      <!-- Información de la sesión -->
+      <div class="session-info">
+        <div class="session-title">
+          <span *ngIf="isCurrentSession(session)" class="current-badge">
+            SESIÓN ACTUAL
+          </span>
+          <span *ngIf="!isCurrentSession(session)">
+            Otro dispositivo
+          </span>
+        </div>
+
+        <div class="session-details">
+          <span class="detail-item">
+            ⏱️ Expira: {{ formatExpiration(session) }}
+          </span>
+          <span class="detail-item time-remaining">
+            ⏳ {{ getTimeRemaining(session) }} restante
+          </span>
+        </div>
+
+        <!-- Usuario asociado -->
+        <div class="session-user" *ngIf="session.user">
+          <span>👤 {{ session.user.email }}</span>
+        </div>
+      </div>
+
+      <!-- Acciones -->
+      <div class="session-actions">
+        <button 
+          class="btn-close-session"
+          (click)="closeSession(session)"
+          [disabled]="closingSessionId === session.id || closingAll"
+          [class.loading]="closingSessionId === session.id"
+        >
+          <span *ngIf="closingSessionId !== session.id">
+            {{ isCurrentSession(session) ? 'Cerrar Sesión' : 'Cerrar' }}
+          </span>
+          <span *ngIf="closingSessionId === session.id">
+            Cerrando...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sin sesiones -->
+  <div class="empty-state" *ngIf="!loading && sessions.length === 0">
+    <p>🔒 No hay sesiones activas</p>
+  </div>
+
+  <!-- Acciones globales -->
+  <div class="global-actions" *ngIf="!loading && sessions.length > 1">
+    <button 
+      class="btn-logout-all"
+      (click)="logoutAll()"
+      [disabled]="closingAll"
+    >
+      <span *ngIf="!closingAll">
+        🚪 Cerrar todas las sesiones
+      </span>
+      <span *ngIf="closingAll">
+        Cerrando todas...
+      </span>
+    </button>
+    <p class="warning-text">
+      ⚠️ Esto cerrará tu sesión en todos los dispositivos
+    </p>
+  </div>
+
+  <!-- Info adicional -->
+  <div class="info-section">
+    <h4>💡 ¿Qué es esto?</h4>
+    <p>
+      Cada vez que inicias sesión en un dispositivo o navegador, 
+      se crea una sesión activa. Aquí puedes ver todos los lugares 
+      donde tienes sesión abierta y cerrar las que no reconozcas.
+    </p>
+    <p>
+      <strong>Consejo de seguridad:</strong> Si ves una sesión que no reconoces, 
+      ciérrala inmediatamente y cambia tu contraseña.
+    </p>
+  </div>
+</div>

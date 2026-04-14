@@ -1,0 +1,113 @@
+<div class="profile-container">
+  <div class="profile-wrapper">
+    <section class="profile-hero">
+      <div class="hero-copy">
+        <span class="hero-kicker">
+          <mat-icon>person</mat-icon>
+          Cuenta MoviRuta
+        </span>
+        <h1>Mi perfil</h1>
+        <p>Gestiona tu informacion, seguridad y sesiones desde un panel mas claro y consistente.</p>
+      </div>
+    </section>
+
+    <div class="profile-card" *ngIf="currentUser && !loading">
+      <section class="profile-avatar-section">
+        <div class="avatar" *ngIf="!profile?.photo || avatarError">
+          {{ (currentUser.name.charAt(0) || 'U') }}{{ (currentUser.name.charAt(currentUser.name.lastIndexOf(' ') + 1) || '') }}
+        </div>
+        <img
+          *ngIf="profile?.photo && !avatarError"
+          [src]="profile!.photo"
+          alt="Foto de perfil"
+          class="avatar-photo"
+          (error)="onAvatarError()"
+          referrerpolicy="no-referrer"
+        />
+
+        <div class="user-name">
+          <span class="user-badge">Operador autenticado</span>
+          <h2>{{ currentUser.name }}</h2>
+          <p class="email-text">{{ currentUser.email }}</p>
+          <p class="provider-text" *ngIf="currentUser.authProvider">
+            <mat-icon class="provider-icon">vpn_key</mat-icon>
+            {{ currentUser.authProvider }}
+          </p>
+        </div>
+      </section>
+
+      <section class="profile-info-section">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">Resumen</span>
+            <h3>Datos principales</h3>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <article class="info-item">
+            <span class="info-label"><mat-icon>mail</mat-icon>Email</span>
+            <strong class="info-value">{{ currentUser.email }}</strong>
+          </article>
+
+          <article class="info-item">
+            <span class="info-label"><mat-icon>phone</mat-icon>Telefono</span>
+            <strong class="info-value">{{ profile?.phone || 'No registrado' }}</strong>
+          </article>
+
+          <article class="info-item" *ngIf="roles.roles.length > 0">
+            <span class="info-label"><mat-icon>badge</mat-icon>Roles</span>
+            <div class="info-value roles-wrap">
+              <span class="role-badge" *ngFor="let role of roles.roles">
+                {{ role }}
+              </span>
+            </div>
+          </article>
+
+          <article class="info-item" *ngIf="roles.isAdmin">
+            <span class="info-label"><mat-icon>admin_panel_settings</mat-icon>Privilegios</span>
+            <div class="info-value">
+              <span class="badge-admin">Administrador</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="profile-actions">
+        <button class="action-btn primary" (click)="toggleProfileEdit()" matTooltip="Editar informacion de perfil">
+          <mat-icon>edit</mat-icon>
+          {{ showProfileEdit ? 'Cerrar edicion' : 'Editar perfil' }}
+        </button>
+        <button class="action-btn secondary" (click)="toggleChangePassword()" matTooltip="Cambiar tu contrasena de acceso">
+          <mat-icon>lock_reset</mat-icon>
+          {{ showChangePassword ? 'Cerrar cambio' : 'Cambiar contrasena' }}
+        </button>
+        <button class="action-btn tertiary" (click)="toggleMySessions()" matTooltip="Ver y gestionar dispositivos conectados">
+          <mat-icon>devices</mat-icon>
+          {{ showMySessions ? 'Cerrar sesiones' : 'Mis sesiones' }}
+        </button>
+      </section>
+
+      <section class="profile-sections" *ngIf="showProfileEdit || showChangePassword || showMySessions">
+        <div class="section-divider"></div>
+
+        <div class="profile-edit-section" *ngIf="showProfileEdit">
+          <app-profile-edit></app-profile-edit>
+        </div>
+
+        <div class="change-password-section" *ngIf="showChangePassword">
+          <app-change-password></app-change-password>
+        </div>
+
+        <div class="my-sessions-section" *ngIf="showMySessions">
+          <app-my-sessions></app-my-sessions>
+        </div>
+      </section>
+    </div>
+
+    <div class="profile-card loading" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>Cargando tu perfil...</p>
+    </div>
+  </div>
+</div>

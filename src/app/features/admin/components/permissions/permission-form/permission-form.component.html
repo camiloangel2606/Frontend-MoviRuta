@@ -1,0 +1,47 @@
+<section class="form-shell">
+  <mat-card class="form-card">
+    <h1 class="form-title">{{ isEdit ? 'Editar permiso' : 'Nuevo permiso' }}</h1>
+    <p class="form-subtitle">Configura acceso a endpoints del sistema con una estructura clara y consistente.</p>
+
+    <div class="loading-role" *ngIf="loading">
+      <mat-spinner diameter="36"></mat-spinner>
+      <span>{{ isEdit ? 'Cargando permiso...' : 'Procesando...' }}</span>
+    </div>
+
+    <form class="section-grid" (ngSubmit)="save()" *ngIf="!loading">
+      <div class="permission-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Metodo HTTP</mat-label>
+          <mat-select [(ngModel)]="permission.method" name="method" required>
+            <mat-option *ngFor="let method of httpMethods" [value]="method">{{ method }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Modelo o entidad</mat-label>
+          <input matInput [(ngModel)]="permission.model" name="model" placeholder="User, Role, Session..." list="modelSuggestions" required />
+          <datalist id="modelSuggestions">
+            <option *ngFor="let model of commonModels" [value]="model"></option>
+          </datalist>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>URL del endpoint</mat-label>
+        <input matInput [(ngModel)]="permission.url" name="url" placeholder="/api/ejemplo" required />
+        <mat-hint>Ejemplo: /api/users o /api/role-permissions</mat-hint>
+      </mat-form-field>
+
+      <div class="form-actions">
+        <a mat-stroked-button color="primary" routerLink="/admin/permissions">
+          <mat-icon>arrow_back</mat-icon>
+          Cancelar
+        </a>
+        <button mat-flat-button color="primary" type="submit">
+          <mat-icon>{{ isEdit ? 'save' : 'add_circle' }}</mat-icon>
+          {{ isEdit ? 'Guardar cambios' : 'Crear permiso' }}
+        </button>
+      </div>
+    </form>
+  </mat-card>
+</section>

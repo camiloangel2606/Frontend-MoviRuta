@@ -1,0 +1,40 @@
+<section class="form-shell">
+  <mat-card class="form-card">
+    <h1 class="form-title">{{ isEditMode ? 'Editar rol' : 'Nuevo rol' }}</h1>
+    <p class="form-subtitle">Define el nombre del rol y su alcance operativo dentro de la plataforma.</p>
+
+    <div class="loading-role" *ngIf="loadingRole">
+      <mat-spinner diameter="36"></mat-spinner>
+      <span>Cargando informacion del rol...</span>
+    </div>
+
+    <form class="section-grid" [formGroup]="roleForm" (ngSubmit)="onSubmit()" *ngIf="!loadingRole">
+      <mat-form-field appearance="outline">
+        <mat-label>Nombre del rol</mat-label>
+        <input matInput formControlName="name" placeholder="Ej. Supervisor de ruta" />
+        <mat-hint>Nombre visible para administradores y operadores.</mat-hint>
+        <mat-error *ngIf="name?.hasError('required')">Ingresa un nombre para el rol.</mat-error>
+        <mat-error *ngIf="name?.hasError('minlength')">Usa al menos 3 caracteres.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Descripcion</mat-label>
+        <textarea matInput rows="5" formControlName="description" placeholder="Describe responsabilidades y alcance del rol."></textarea>
+        <mat-hint>Explica para que sirve este perfil de acceso.</mat-hint>
+        <mat-error *ngIf="description?.hasError('required')">Agrega una descripcion breve.</mat-error>
+        <mat-error *ngIf="description?.hasError('minlength')">Usa al menos 10 caracteres.</mat-error>
+      </mat-form-field>
+
+      <div class="form-actions">
+        <a mat-stroked-button color="primary" routerLink="/admin/roles">
+          <mat-icon>arrow_back</mat-icon>
+          Cancelar
+        </a>
+        <button mat-flat-button color="primary" type="submit" [disabled]="loading">
+          <mat-icon>{{ isEditMode ? 'save' : 'add_circle' }}</mat-icon>
+          {{ loading ? 'Guardando...' : (isEditMode ? 'Guardar cambios' : 'Crear rol') }}
+        </button>
+      </div>
+    </form>
+  </mat-card>
+</section>

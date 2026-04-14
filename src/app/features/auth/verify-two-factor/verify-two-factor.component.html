@@ -1,0 +1,85 @@
+<div class="verify-2fa-container">
+  <mat-card class="verify-2fa-card">
+    <mat-card-header>
+      <mat-card-title>
+        <h1>Verifica tu identidad</h1>
+      </mat-card-title>
+      <mat-card-subtitle>
+        <p>Ingresa el codigo de 6 digitos enviado a <strong>{{ userEmail }}</strong></p>
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Validando codigo de seguridad...</p>
+      </div>
+
+      <form [formGroup]="verifyForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
+        <div class="verification-status" [class.expired]="isExpired">
+          <span class="status-pill">{{ isExpired ? 'Codigo vencido' : 'Segundo factor activo' }}</span>
+          <p>
+            {{ isExpired ? 'Solicita un nuevo codigo para completar el acceso.' : 'Este paso protege el acceso a tus vistas y operaciones.' }}
+          </p>
+        </div>
+
+        <div class="timer-section">
+          <p class="timer-label">Codigo expira en</p>
+          <div [ngClass]="isExpired ? 'timer expired' : 'timer'" [class.warning]="timeRemaining < 120">
+            {{ formattedTime }}
+          </div>
+          <p *ngIf="timeRemaining < 120" class="timer-warning">
+            El codigo expirara pronto
+          </p>
+        </div>
+
+        <div class="otp-input-group">
+          <div class="otp-input-label">
+            <p>Ingresa los 6 digitos o pega el codigo completo</p>
+          </div>
+
+          <div class="otp-inputs">
+            <input type="text" id="digit1" formControlName="digit1" class="otp-input" maxlength="1" inputmode="numeric" (input)="onDigitInput($event, 0)" (paste)="onPaste($event)" placeholder="0" [disabled]="isExpired || isLoading" aria-label="Digito 1" />
+            <input type="text" id="digit2" formControlName="digit2" class="otp-input" maxlength="1" inputmode="numeric" (input)="onDigitInput($event, 1)" (paste)="onPaste($event)" placeholder="0" [disabled]="isExpired || isLoading" aria-label="Digito 2" />
+            <input type="text" id="digit3" formControlName="digit3" class="otp-input" maxlength="1" inputmode="numeric" (input)="onDigitInput($event, 2)" (paste)="onPaste($event)" placeholder="0" [disabled]="isExpired || isLoading" aria-label="Digito 3" />
+            <span class="otp-separator">-</span>
+            <input type="text" id="digit4" formControlName="digit4" class="otp-input" maxlength="1" inputmode="numeric" (input)="onDigitInput($event, 3)" (paste)="onPaste($event)" placeholder="0" [disabled]="isExpired || isLoading" aria-label="Digito 4" />
+            <input type="text" id="digit5" formControlName="digit5" class="otp-input" maxlength="1" inputmode="numeric" (input)="onDigitInput($event, 4)" (paste)="onPaste($event)" placeholder="0" [disabled]="isExpired || isLoading" aria-label="Digito 5" />
+            <input type="text" id="digit6" formControlName="digit6" class="otp-input" maxlength="1" inputmode="numeric" (input)="onDigitInput($event, 5)" (paste)="onPaste($event)" placeholder="0" [disabled]="isExpired || isLoading" aria-label="Digito 6" />
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button
+            type="submit"
+            mat-raised-button
+            color="primary"
+            [disabled]="verifyForm.invalid || isExpired || isLoading"
+            class="verify-button"
+          >
+            {{ isLoading ? 'Verificando...' : 'Verificar codigo' }}
+          </button>
+        </div>
+
+        <div class="resend-section">
+          <p class="resend-label">No recibiste el codigo?</p>
+          <button
+            type="button"
+            mat-stroked-button
+            class="resend-button"
+            (click)="onResendCode()"
+            [disabled]="resendCooldown > 0 || isLoading"
+          >
+            {{ resendCooldown > 0 ? 'Reenviar en ' + resendCooldown + 's' : 'Reenviar codigo' }}
+          </button>
+        </div>
+      </form>
+
+      <div class="security-info">
+        <p class="info-text">
+          Tu codigo no se almacena en el navegador. Solo se valida temporalmente para habilitar la sesion.
+        </p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

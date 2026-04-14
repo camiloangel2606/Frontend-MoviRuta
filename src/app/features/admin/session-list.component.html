@@ -1,0 +1,111 @@
+<div class="session-list-container">
+  <header class="page-header">
+    <a routerLink="/admin/dashboard" class="back-link">← Volver al Dashboard</a>
+    <h1>🖥️ Gestión de Sesiones</h1>
+    <p class="subtitle" *ngIf="!loading">
+      {{ getActiveCount() }} activas · {{ getExpiredCount() }} expiradas
+    </p>
+  </header>
+
+  <!-- Mensaje de éxito -->
+  <div class="success-message" *ngIf="successMessage">
+    ✅ {{ successMessage }}
+  </div>
+
+  <!-- Barra de búsqueda -->
+  <div class="search-bar">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (input)="onSearch()"
+      placeholder="🔍 Buscar por nombre o email..."
+    />
+  </div>
+
+  <!-- Estado de carga -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Cargando sesiones...</p>
+  </div>
+
+  <!-- Estado de error -->
+  <div class="error-state" *ngIf="error && !loading">
+    <p>⚠️ {{ error }}</p>
+    <button (click)="loadSessions()">Reintentar</button>
+  </div>
+
+  <!-- Tabla de sesiones -->
+  <div class="sessions-table" *ngIf="!loading && !error">
+    <table>
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Proveedor</th>
+          <th>Estado</th>
+          <th>Expira</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let session of filteredSessions"
+            [class.expired]="isExpired(session)">
+          <!-- Usuario -->
+          <td>
+            <div class="user-info">
+              <span class="user-name">{{ session.user.name || 'Sin nombre' }}</span>
+              <span class="user-email">{{ session.user.email || 'Sin email' }}</span>
+            </div>
+          </td>
+
+          <!-- Proveedor -->
+          <td>
+            <span class="provider-badge">
+              {{ getProviderIcon(session.user.authProvider) }}
+              {{ session.user.authProvider || 'LOCAL' }}
+            </span>
+          </td>
+
+          <!-- Estado -->
+          <td>
+            <span class="status-badge" [class.active]="!isExpired(session)" [class.expired]="isExpired(session)">
+              {{ isExpired(session) ? '⏰ Expirada' : '🟢 Activa' }}
+            </span>
+            <span class="time-remaining" *ngIf="!isExpired(session)">
+              {{ getTimeRemaining(session) }}
+            </span>
+          </td>
+
+          <!-- Expiración -->
+          <td class="expiration-date">
+            {{ formatExpiration(session) }}
+          </td>
+
+          <!-- Acciones -->
+          <td>
+            <button
+              class="btn-delete"
+              (click)="deleteSession(session)"
+              [disabled]="deletingId === session.id"
+              title="Cerrar sesión">
+              <span *ngIf="deletingId !== session.id">🗑️ Cerrar</span>
+              <span *ngIf="deletingId === session.id">⏳...</span>
+            </button>
+          </td>
+        </tr>
+
+        <!-- Sin resultados -->
+        <tr *ngIf="filteredSessions.length === 0">
+          <td colspan="5" class="empty-state">
+            <span *ngIf="searchTerm">No se encontraron sesiones para "{{ searchTerm }}"</span>
+            <span *ngIf="!searchTerm">No hay sesiones activas</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Contador de resultados -->
+  <p class="results-count" *ngIf="!loading && filteredSessions.length > 0">
+    Mostrando {{ filteredSessions.length }} de {{ sessions.length }} sesiones
+  </p>
+</div>

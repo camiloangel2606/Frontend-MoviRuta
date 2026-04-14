@@ -1,0 +1,241 @@
+// Variables CSS para tema oscuro
+$primary-color: var(--color-primary);
+$text-color: var(--text-primary);
+$text-light: var(--text-secondary);
+$bg-color: var(--bg-secondary);
+$card-bg: var(--bg-card);
+$border-color: var(--border-color);
+
+.session-list-container {
+  min-height: 100vh;
+  background: $bg-color;
+  padding: 84px 24px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  transition: background 0.3s ease;
+}
+
+.page-header {
+  margin-bottom: 24px;
+
+  .back-link {
+    color: $text-light;
+    text-decoration: none;
+    font-size: 14px;
+    &:hover { color: $primary-color; }
+  }
+
+  h1 {
+    margin: 8px 0 4px;
+    font-size: 24px;
+    color: $text-color;
+  }
+
+  .subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: $text-light;
+  }
+}
+
+.success-message {
+  background: rgba(72, 187, 120, 0.15);
+  color: #48bb78;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-weight: 500;
+  border: 1px solid rgba(72, 187, 120, 0.3);
+}
+
+.search-bar {
+  margin-bottom: 20px;
+
+  input {
+    width: 100%;
+    padding: 14px 20px;
+    border: 2px solid $border-color;
+    border-radius: 10px;
+    font-size: 15px;
+    background: $card-bg;
+    color: $text-color;
+    transition: border-color 0.2s, background 0.3s;
+
+    &::placeholder {
+      color: $text-light;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+    }
+  }
+}
+
+.loading-state, .error-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: $card-bg;
+  border-radius: 12px;
+  color: $text-light;
+  border: 1px solid $border-color;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid $border-color;
+    border-top-color: $primary-color;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    animation: spin 0.8s linear infinite;
+  }
+
+  button {
+    margin-top: 16px;
+    padding: 10px 20px;
+    background: $primary-color;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.sessions-table {
+  background: $card-bg;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid $border-color;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid $border-color;
+  }
+
+  th {
+    background: $bg-color;
+    font-weight: 600;
+    color: $text-light;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  tr.expired {
+    opacity: 0.6;
+  }
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .user-name {
+      font-weight: 600;
+      color: $text-color;
+    }
+
+    .user-email {
+      font-size: 13px;
+      color: $text-light;
+    }
+  }
+
+  .provider-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(102, 126, 234, 0.15);
+    color: $primary-color;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+
+    &.active {
+      background: rgba(72, 187, 120, 0.15);
+      color: #48bb78;
+    }
+
+    &.expired {
+      background: rgba(245, 101, 101, 0.15);
+      color: #f56565;
+    }
+  }
+
+  .time-remaining {
+    display: block;
+    font-size: 11px;
+    color: $text-light;
+    margin-top: 2px;
+  }
+
+  .expiration-date {
+    font-size: 13px;
+    color: $text-light;
+  }
+
+  .btn-delete {
+    padding: 8px 14px;
+    background: rgba(245, 101, 101, 0.15);
+    color: #f56565;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover:not(:disabled) {
+      background: rgba(245, 101, 101, 0.25);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    color: $text-light;
+    padding: 40px;
+  }
+}
+
+.results-count {
+  text-align: center;
+  color: $text-light;
+  font-size: 14px;
+  margin-top: 16px;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .sessions-table {
+    overflow-x: auto;
+
+    table {
+      min-width: 600px;
+    }
+  }
+}

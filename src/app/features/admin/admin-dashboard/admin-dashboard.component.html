@@ -1,0 +1,110 @@
+<div class="admin-container">
+  <section class="admin-hero">
+    <div class="hero-copy">
+      <span class="hero-kicker">
+        <mat-icon>admin_panel_settings</mat-icon>
+        Centro admin
+      </span>
+      <h1>Panel de administracion</h1>
+      <p>Gestiona usuarios, roles, permisos y sesiones desde una vista mas clara y consistente.</p>
+    </div>
+  </section>
+
+  <section class="stats-section">
+    <article class="stat-card">
+      <div class="stat-icon users">
+        <mat-icon>groups</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.totalUsers }}</span>
+        <span class="stat-label">Usuarios</span>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon roles">
+        <mat-icon>badge</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.totalRoles }}</span>
+        <span class="stat-label">Roles</span>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon assignments">
+        <mat-icon>fact_check</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.totalAssignments }}</span>
+        <span class="stat-label">Asignaciones</span>
+      </div>
+    </article>
+  </section>
+
+  <section class="actions-section">
+    <div class="section-heading">
+      <div>
+        <span class="section-kicker">Navegacion</span>
+        <h2>Acciones rapidas</h2>
+      </div>
+    </div>
+
+    <div class="actions-grid">
+      <a routerLink="/admin/users" class="action-card">
+        <div class="action-icon"><mat-icon>groups</mat-icon></div>
+        <strong class="action-title">Ver usuarios</strong>
+        <span class="action-desc">Lista general y seguimiento de cuentas</span>
+      </a>
+
+      <a routerLink="/admin/roles" class="action-card">
+        <div class="action-icon"><mat-icon>badge</mat-icon></div>
+        <strong class="action-title">Gestionar roles</strong>
+        <span class="action-desc">Crear, editar y organizar perfiles</span>
+      </a>
+
+      <a routerLink="/admin/users" class="action-card">
+        <div class="action-icon"><mat-icon>assignment_ind</mat-icon></div>
+        <strong class="action-title">Asignar roles</strong>
+        <span class="action-desc">Controlar accesos por usuario</span>
+      </a>
+
+      <a routerLink="/admin/permissions" class="action-card">
+        <div class="action-icon"><mat-icon>key</mat-icon></div>
+        <strong class="action-title">Gestionar permisos</strong>
+        <span class="action-desc">Crear y editar permisos del sistema</span>
+      </a>
+
+      <a routerLink="/admin/role-permissions" class="action-card">
+        <div class="action-icon"><mat-icon>account_tree</mat-icon></div>
+        <strong class="action-title">Permisos por rol</strong>
+        <span class="action-desc">Asociar permisos a cada perfil operativo</span>
+      </a>
+
+      <a routerLink="/admin/sessions" class="action-card">
+        <div class="action-icon"><mat-icon>devices</mat-icon></div>
+        <strong class="action-title">Gestionar sesiones</strong>
+        <span class="action-desc">Revisar actividad y dispositivos activos</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="recent-section" *ngIf="recentRoles.length > 0">
+    <div class="section-heading">
+      <div>
+        <span class="section-kicker">Control de acceso</span>
+        <h2>Roles del sistema</h2>
+      </div>
+    </div>
+
+    <div class="roles-list">
+      <article class="role-item" *ngFor="let role of recentRoles">
+        <div>
+          <strong class="role-name">{{ role.name }}</strong>
+          <span class="role-desc">{{ role.description }}</span>
+        </div>
+        <span class="role-tag">Rol activo</span>
+      </article>
+    </div>
+  </section>
+</div>

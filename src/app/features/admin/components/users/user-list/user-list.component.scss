@@ -1,0 +1,35 @@
+.table-state {
+  padding: 20px 22px;
+  color: var(--app-text-soft);
+}
+
+table {
+  width: 100%;
+}
+
+.identity-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  strong {
+    display: block;
+    color: var(--app-text-strong);
+  }
+
+  span {
+    color: var(--app-text-soft);
+    font-size: 12px;
+  }
+}
+
+.identity-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  background: linear-gradient(135deg, rgba(37, 145, 255, 0.18), rgba(51, 209, 183, 0.18));
+  color: var(--app-brand-700);
+}

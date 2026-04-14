@@ -1,0 +1,70 @@
+<section class="page-shell">
+  <header class="page-header">
+    <div class="page-heading">
+      <span class="page-kicker">Administracion</span>
+      <h1 class="page-title">Usuarios del sistema</h1>
+      <p class="page-description">Consulta usuarios, proveedor de acceso y gestiona sus roles.</p>
+    </div>
+  </header>
+
+  <div class="app-data-table">
+    <div class="app-table-toolbar">
+      <mat-form-field appearance="outline" class="app-search">
+        <mat-label>Buscar usuario</mat-label>
+        <input matInput #searchInput (input)="onSearch(searchInput.value)" placeholder="Nombre o email" />
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <span class="app-badge app-badge-info">{{ dataSource.data.length }} usuarios</span>
+    </div>
+
+    <div class="table-state" *ngIf="loading">Cargando usuarios...</div>
+
+    <table mat-table [dataSource]="dataSource" matSort *ngIf="!loading">
+      <ng-container matColumnDef="user">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Usuario</th>
+        <td mat-cell *matCellDef="let user">
+          <div class="identity-cell">
+            <span class="identity-avatar">{{ user.name?.charAt(0) || 'U' }}</span>
+            <div>
+              <strong>{{ user.name }}</strong>
+              <span>ID {{ user.id }}</span>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
+        <td mat-cell *matCellDef="let user">{{ user.email }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="provider">
+        <th mat-header-cell *matHeaderCellDef>Acceso</th>
+        <td mat-cell *matCellDef="let user">
+          <span class="app-badge app-badge-info">
+            <mat-icon>{{ getProviderIcon(user.authProvider) }}</mat-icon>
+            {{ user.authProvider || 'LOCAL' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let user">
+          <div class="app-table-actions">
+            <a mat-stroked-button color="primary" [routerLink]="['/admin/user-roles', user.id]">
+              <mat-icon>manage_accounts</mat-icon>
+              Roles
+            </a>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <mat-paginator [pageSize]="8" [pageSizeOptions]="[8, 16, 24]"></mat-paginator>
+  </div>
+</section>

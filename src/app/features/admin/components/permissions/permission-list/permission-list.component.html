@@ -1,0 +1,70 @@
+<section class="page-shell">
+  <header class="page-header">
+    <div class="page-heading">
+      <span class="page-kicker">Seguridad operacional</span>
+      <h1 class="page-title">Matriz de permisos</h1>
+      <p class="page-description">Controla accesos por endpoint y metodo HTTP con una vista clara y filtrable.</p>
+    </div>
+
+    <a mat-flat-button color="primary" routerLink="/admin/permissions/new">
+      <mat-icon>add</mat-icon>
+      Nuevo permiso
+    </a>
+  </header>
+
+  <div class="app-data-table">
+    <div class="app-table-toolbar">
+      <mat-form-field appearance="outline" class="app-search">
+        <mat-label>Buscar permiso</mat-label>
+        <input matInput #searchInput (input)="onSearch(searchInput.value)" placeholder="URL, metodo o modelo" />
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <span class="app-badge app-badge-warning">{{ dataSource.data.length }} permisos</span>
+    </div>
+
+    <div class="table-state" *ngIf="loading">Cargando permisos...</div>
+
+    <table mat-table [dataSource]="dataSource" matSort *ngIf="!loading">
+      <ng-container matColumnDef="method">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Metodo</th>
+        <td mat-cell *matCellDef="let permission">
+          <span class="app-badge" [class]="getMethodClass(permission.method)">
+            {{ permission.method }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="model">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Modelo</th>
+        <td mat-cell *matCellDef="let permission">{{ permission.model }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="url">
+        <th mat-header-cell *matHeaderCellDef>URL</th>
+        <td mat-cell *matCellDef="let permission" class="endpoint-cell">{{ permission.url }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let permission">
+          <div class="app-table-actions">
+            <a mat-stroked-button color="primary" [routerLink]="['/admin/permissions/edit', permission.id]">
+              <mat-icon>edit</mat-icon>
+              Editar
+            </a>
+            <button mat-stroked-button color="warn" (click)="deletePermission(permission.id!)">
+              <mat-icon>delete</mat-icon>
+              Eliminar
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <mat-paginator [pageSize]="8" [pageSizeOptions]="[8, 16, 24]"></mat-paginator>
+  </div>
+</section>

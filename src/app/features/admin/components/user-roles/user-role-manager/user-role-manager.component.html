@@ -1,0 +1,67 @@
+<div class="user-role-container">
+  <header class="page-header">
+    <a routerLink="/admin/users" class="back-link">← Volver a Usuarios</a>
+    <h1>🔗 Gestionar Roles</h1>
+  </header>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Cargando datos...</p>
+  </div>
+
+  <div class="content" *ngIf="!loading">
+    <!-- User Info -->
+    <div class="user-card" *ngIf="user">
+      <div class="user-avatar">
+        {{ (user.name && user.name.charAt(0)) || 'U' }}
+      </div>
+      <div class="user-info">
+        <h2>{{ user.name }}</h2>
+        <p>{{ user.email }}</p>
+        <span class="provider-badge">{{ user.authProvider || 'LOCAL' }}</span>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="success-message" *ngIf="successMessage">
+      ✅ {{ successMessage }}
+    </div>
+    <div class="error-message" *ngIf="error">
+      ❌ {{ error }}
+    </div>
+
+    <!-- Roles List -->
+    <div class="roles-section">
+      <h3>Roles Disponibles</h3>
+      <p class="hint">Haz clic en un rol para asignarlo o quitarlo</p>
+
+      <div class="roles-grid">
+        <button
+          *ngFor="let role of allRoles"
+          class="role-card"
+          [class.active]="hasRole(role.id)"
+          [disabled]="saving"
+          (click)="toggleRole(role)"
+        >
+          <span class="role-icon">{{ hasRole(role.id) ? '✅' : '⬜' }}</span>
+          <span class="role-name">{{ role.name }}</span>
+          <span class="role-desc">{{ role.description }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Current Roles Summary -->
+    <div class="summary-section">
+      <h3>Roles Asignados ({{ userRoles.length }})</h3>
+      <div class="assigned-roles">
+        <span class="role-badge" *ngFor="let ur of userRoles">
+          {{ ur.role ? ur.role.name : '' }}
+        </span>
+        <span class="no-roles" *ngIf="userRoles.length === 0">
+          Sin roles asignados
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,55 @@
+<!-- Skeleton Text -->
+<ng-container *ngIf="type === 'text'">
+  <div 
+    *ngFor="let line of linesArray; let i = index"
+    class="skeleton skeleton-text"
+    [style.width]="getLineWidth(i)"
+    [style.height]="height"
+    [style.animation-delay]="(delay + i * 0.1) + 's'">
+  </div>
+</ng-container>
+
+<!-- Skeleton Circle (Avatar) -->
+<div 
+  *ngIf="type === 'circle'"
+  class="skeleton skeleton-circle"
+  [style.width]="width"
+  [style.height]="width"
+  [style.animation-delay]="delay + 's'">
+</div>
+
+<!-- Skeleton Card -->
+<div 
+  *ngIf="type === 'card'"
+  class="skeleton-card"
+  [style.animation-delay]="delay + 's'">
+  <div class="skeleton-card-content">
+    <div class="skeleton skeleton-circle" style="width: 48px; height: 48px;"></div>
+    <div class="skeleton-card-lines">
+      <div class="skeleton skeleton-text" style="width: 60%; height: 14px;"></div>
+      <div class="skeleton skeleton-text" style="width: 40%; height: 12px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Skeleton Stat Card -->
+<div 
+  *ngIf="type === 'stat'"
+  class="skeleton-stat"
+  [style.animation-delay]="delay + 's'">
+  <div class="skeleton skeleton-icon"></div>
+  <div class="skeleton-stat-info">
+    <div class="skeleton skeleton-text" style="width: 60px; height: 28px;"></div>
+    <div class="skeleton skeleton-text" style="width: 100px; height: 14px; margin-top: 6px;"></div>
+  </div>
+</div>
+
+<!-- Skeleton Action Card -->
+<div 
+  *ngIf="type === 'action'"
+  class="skeleton-action"
+  [style.animation-delay]="delay + 's'">
+  <div class="skeleton skeleton-action-icon"></div>
+  <div class="skeleton skeleton-text" style="width: 80%; height: 16px;"></div>
+  <div class="skeleton skeleton-text" style="width: 60%; height: 12px;"></div>
+</div>

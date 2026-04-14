@@ -1,0 +1,71 @@
+<div class="role-permission-container">
+  <h2>Asignar Permisos a Roles</h2>
+
+  @if (loading) {
+    <div class="loading">Cargando...</div>
+  }
+
+  @if (error) {
+    <div class="error">{{ error }}</div>
+  }
+
+  <div class="content-wrapper">
+    <div class="roles-panel">
+      <h3>Selecciona un Rol</h3>
+      <div class="roles-list">
+        @for (role of roles; track role.id) {
+          <div
+            class="role-item"
+            [class.selected]="selectedRole?.id === role.id"
+            (click)="selectRole(role)"
+          >
+            <span class="role-icon">Rol</span>
+            <div class="role-info">
+              <span class="role-name">{{ role.name }}</span>
+              <span class="role-desc">{{ role.description || 'Sin descripcion' }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="permissions-panel">
+      @if (!selectedRole) {
+        <div class="no-selection">
+          <span class="icon">Selecciona</span>
+          <p>Selecciona un rol para ver sus permisos</p>
+        </div>
+      } @else {
+        <h3>Permisos de {{ selectedRole.name }}</h3>
+        <p class="hint">Marca los permisos que deseas asignar a este rol</p>
+
+        <div class="permissions-list">
+          @for (permission of allPermissions; track permission.id) {
+            <div class="permission-item" [class.has-permission]="hasPermission(permission.id!)">
+              <label class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  [checked]="hasPermission(permission.id!)"
+                  (change)="togglePermission(permission)"
+                />
+                <span class="checkmark"></span>
+              </label>
+              <div class="permission-info">
+                <div class="permission-header">
+                  <span class="method-badge" [class]="getMethodClass(permission.method)">
+                    {{ permission.method }}
+                  </span>
+                  <span class="permission-url">{{ permission.url }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="back-link">
+    <a routerLink="/admin">Volver al Panel Admin</a>
+  </div>
+</div>

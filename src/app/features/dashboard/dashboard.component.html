@@ -1,0 +1,322 @@
+<div class="dashboard-container">
+  <section class="welcome-section animate-in" [style.--delay]="'0s'">
+    <div class="welcome-content">
+      <div class="welcome-profile">
+        <div class="welcome-avatar" *ngIf="(!profile?.photo || avatarError) && !loading">
+          {{ userInitials }}
+        </div>
+        <div class="welcome-avatar skeleton-avatar" *ngIf="loading"></div>
+        <img
+          *ngIf="profile?.photo && !avatarError && !loading"
+          [src]="profile!.photo"
+          alt="Avatar"
+          class="welcome-avatar-img"
+          (error)="onAvatarError()"
+          referrerpolicy="no-referrer"
+        />
+
+        <div class="welcome-text">
+          <span class="welcome-kicker">Centro de control MoviRuta</span>
+          <h1 *ngIf="!loading">{{ greeting }}, {{ firstName }}!</h1>
+          <div *ngIf="loading" class="skeleton-welcome-text">
+            <div class="skeleton skeleton-line" style="width: 280px; height: 32px;"></div>
+          </div>
+          <p class="welcome-subtitle" *ngIf="!loading">
+            Visualiza tu estado de seguridad, rutas de acceso y acciones clave desde un panel mas claro.
+          </p>
+          <div *ngIf="loading" class="skeleton skeleton-line" style="width: 220px; height: 17px; margin-top: 8px;"></div>
+        </div>
+      </div>
+
+      <div class="welcome-route-summary">
+        <span class="summary-pill">
+          <mat-icon>route</mat-icon>
+          Operacion segura
+        </span>
+        <div class="summary-grid">
+          <article>
+            <strong>{{ stats.rolesCount }}</strong>
+            <span>roles activos</span>
+          </article>
+          <article>
+            <strong>{{ stats.activeSessions }}</strong>
+            <span>sesiones monitoreadas</span>
+          </article>
+          <article>
+            <strong>{{ stats.profileComplete ? '100%' : 'Pendiente' }}</strong>
+            <span>estado del perfil</span>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="access-denied-alert" *ngIf="accessDeniedMessage">
+    {{ accessDeniedMessage }}
+  </div>
+
+  <div class="dashboard-content" *ngIf="loading">
+    <section class="stats-section">
+      <div class="stats-grid">
+        <app-skeleton type="stat" [delay]="0"></app-skeleton>
+        <app-skeleton type="stat" [delay]="0.1"></app-skeleton>
+        <app-skeleton type="stat" [delay]="0.2"></app-skeleton>
+        <app-skeleton type="stat" [delay]="0.3"></app-skeleton>
+      </div>
+    </section>
+
+    <section class="actions-section">
+      <div class="section-title-skeleton">
+        <div class="skeleton skeleton-line" style="width: 180px; height: 22px;"></div>
+      </div>
+      <div class="actions-grid">
+        <app-skeleton type="action" [delay]="0.2"></app-skeleton>
+        <app-skeleton type="action" [delay]="0.3"></app-skeleton>
+        <app-skeleton type="action" [delay]="0.4"></app-skeleton>
+      </div>
+    </section>
+  </div>
+
+  <div class="dashboard-content" *ngIf="!loading">
+    <section class="stats-section animate-in" [style.--delay]="'0.1s'">
+      <div class="stats-grid">
+        <article class="stat-card animate-card" [style.--card-delay]="'0s'" matTooltip="Roles de usuario asignados">
+          <div class="stat-card-top">
+            <div class="stat-icon roles">
+              <mat-icon>badge</mat-icon>
+            </div>
+            <span class="stat-chip">Accesos</span>
+          </div>
+          <div class="stat-card-body">
+            <span class="stat-value" [appCountUp]="stats.rolesCount" [duration]="800" [countDelay]="200"></span>
+            <strong>Roles asignados</strong>
+            <p>Permisos disponibles para operar dentro del sistema.</p>
+          </div>
+        </article>
+
+        <article class="stat-card animate-card" [style.--card-delay]="'0.1s'" matTooltip="Dispositivos conectados actualmente">
+          <div class="stat-card-top">
+            <div class="stat-icon sessions">
+              <mat-icon>devices</mat-icon>
+            </div>
+            <span class="stat-chip">Seguridad</span>
+          </div>
+          <div class="stat-card-body">
+            <span class="stat-value" [appCountUp]="stats.activeSessions" [duration]="800" [countDelay]="300"></span>
+            <strong>Sesiones activas</strong>
+            <p>Control de dispositivos autenticados en este momento.</p>
+          </div>
+        </article>
+
+        <article class="stat-card animate-card" [style.--card-delay]="'0.2s'" [matTooltip]="stats.profileComplete ? 'Tu perfil esta completo' : 'Completa tu perfil agregando foto y telefono'">
+          <div class="stat-card-top">
+            <div class="stat-icon profile" [class.success]="stats.profileComplete">
+              <mat-icon>{{ stats.profileComplete ? 'verified' : 'pending_actions' }}</mat-icon>
+            </div>
+            <span class="stat-chip">{{ stats.profileComplete ? 'Completo' : 'Pendiente' }}</span>
+          </div>
+          <div class="stat-card-body">
+            <span class="stat-value text-value">{{ stats.profileComplete ? 'Listo' : 'Pendiente' }}</span>
+            <strong>Estado del perfil</strong>
+            <p>Agrega telefono y foto para mejorar la gestion de tu cuenta.</p>
+          </div>
+        </article>
+
+        <article class="stat-card animate-card" [style.--card-delay]="'0.3s'" matTooltip="Metodo utilizado para iniciar sesion">
+          <div class="stat-card-top">
+            <div class="stat-icon auth">
+              <mat-icon>{{ getProviderIcon(currentUser?.authProvider) }}</mat-icon>
+            </div>
+            <span class="stat-chip">Login</span>
+          </div>
+          <div class="stat-card-body">
+            <span class="stat-value text-value">{{ getProviderName(currentUser?.authProvider) }}</span>
+            <strong>Proveedor principal</strong>
+            <p>Metodo actual usado para autenticacion y acceso.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <div class="dashboard-grid animate-in" [style.--delay]="'0.2s'">
+      <section class="panel-card roles-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="panel-kicker">Control de acceso</span>
+            <h2 class="section-title">
+              <mat-icon>theater_comedy</mat-icon>
+              Roles activos
+            </h2>
+          </div>
+          <span class="panel-count">{{ userRoles.length }}</span>
+        </div>
+
+        <div class="roles-list" *ngIf="userRoles.length > 0; else emptyRoles">
+          <span
+            class="role-badge animate-badge"
+            *ngFor="let role of userRoles; let i = index"
+            [style.--badge-delay]="(i * 0.08) + 's'">
+            <mat-icon class="role-icon">verified_user</mat-icon>
+            {{ role }}
+          </span>
+        </div>
+
+        <ng-template #emptyRoles>
+          <app-empty-state
+            icon="badge"
+            title="Sin roles asignados"
+            subtitle="Contacta al administrador para obtener permisos"
+            variant="compact">
+          </app-empty-state>
+        </ng-template>
+      </section>
+
+      <section class="panel-card activity-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="panel-kicker">Seguimiento</span>
+            <h2 class="section-title">
+              <mat-icon>history</mat-icon>
+              Actividad reciente
+            </h2>
+          </div>
+        </div>
+
+        <div class="activity-list">
+          <article class="activity-item">
+            <div class="activity-icon login">
+              <mat-icon>login</mat-icon>
+            </div>
+            <div class="activity-content">
+              <strong>Inicio de sesion exitoso</strong>
+              <span>Hace unos momentos</span>
+            </div>
+          </article>
+
+          <article class="activity-item" *ngIf="profile?.photo">
+            <div class="activity-icon profile">
+              <mat-icon>photo_camera</mat-icon>
+            </div>
+            <div class="activity-content">
+              <strong>Foto de perfil actualizada</strong>
+              <span>Recientemente</span>
+            </div>
+          </article>
+
+          <article class="activity-item" *ngIf="stats.profileComplete">
+            <div class="activity-icon success">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <div class="activity-content">
+              <strong>Perfil completado</strong>
+              <span>Tu cuenta ya tiene informacion clave registrada</span>
+            </div>
+          </article>
+
+          <article class="activity-item" *ngIf="!stats.profileComplete">
+            <div class="activity-icon warning">
+              <mat-icon>edit</mat-icon>
+            </div>
+            <div class="activity-content">
+              <strong>Completa tu perfil</strong>
+              <span>Agrega telefono y foto para cerrar pendientes</span>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <section class="actions-section animate-in" [style.--delay]="'0.3s'">
+      <div class="section-heading">
+        <div>
+          <span class="panel-kicker">Atajos</span>
+          <h2 class="section-title">
+            <mat-icon>bolt</mat-icon>
+            Acciones rapidas
+          </h2>
+        </div>
+      </div>
+
+      <div class="actions-grid">
+        <button class="action-card animate-card" [style.--card-delay]="'0s'" (click)="navigateTo('/profile')">
+          <div class="action-icon-wrapper">
+            <mat-icon>person</mat-icon>
+          </div>
+          <strong class="action-title">Mi perfil</strong>
+          <span class="action-desc">Ver y editar informacion personal</span>
+          <span class="action-foot">
+            <span>Gestionar</span>
+            <mat-icon>arrow_forward</mat-icon>
+          </span>
+        </button>
+
+        <button class="action-card warning animate-card" [style.--card-delay]="'0.1s'" (click)="navigateTo('/profile')" *ngIf="!stats.profileComplete">
+          <div class="action-icon-wrapper warning">
+            <mat-icon>edit_note</mat-icon>
+          </div>
+          <strong class="action-title">Completar perfil</strong>
+          <span class="action-desc">Agrega tu telefono y foto del operador</span>
+          <span class="action-foot">
+            <span>Actualizar</span>
+            <mat-icon>arrow_forward</mat-icon>
+          </span>
+        </button>
+
+        <button class="action-card admin animate-card" [style.--card-delay]="'0.2s'" *ngIf="isAdmin" (click)="navigateTo('/admin')">
+          <div class="action-icon-wrapper admin">
+            <mat-icon>admin_panel_settings</mat-icon>
+          </div>
+          <strong class="action-title">Panel admin</strong>
+          <span class="action-desc">Gestion de usuarios, permisos y roles</span>
+          <span class="action-foot">
+            <span>Administrar</span>
+            <mat-icon>arrow_forward</mat-icon>
+          </span>
+        </button>
+
+        <button class="action-card animate-card" [style.--card-delay]="'0.3s'" (click)="navigateTo('/profile', { section: 'sessions' })">
+          <div class="action-icon-wrapper">
+            <mat-icon>smartphone</mat-icon>
+          </div>
+          <strong class="action-title">Mis sesiones</strong>
+          <span class="action-desc">Revisar dispositivos conectados y actividad</span>
+          <span class="action-foot">
+            <span>Supervisar</span>
+            <mat-icon>arrow_forward</mat-icon>
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <section class="info-section animate-in" [style.--delay]="'0.4s'">
+      <div class="section-heading">
+        <div>
+          <span class="panel-kicker">Resumen</span>
+          <h2 class="section-title">
+            <mat-icon>info</mat-icon>
+            Mi informacion
+          </h2>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <article class="info-tile">
+          <span class="info-label"><mat-icon>mail</mat-icon>Email</span>
+          <strong>{{ currentUser?.email }}</strong>
+        </article>
+        <article class="info-tile">
+          <span class="info-label"><mat-icon>person</mat-icon>Nombre</span>
+          <strong>{{ currentUser?.name }}</strong>
+        </article>
+        <article class="info-tile">
+          <span class="info-label"><mat-icon>phone</mat-icon>Telefono</span>
+          <strong [class.muted]="!profile?.phone">{{ profile?.phone || 'No registrado' }}</strong>
+        </article>
+        <article class="info-tile">
+          <span class="info-label"><mat-icon>security</mat-icon>Proveedor</span>
+          <strong>{{ currentUser?.authProvider || 'LOCAL' }}</strong>
+        </article>
+      </div>
+    </section>
+  </div>
+</div>

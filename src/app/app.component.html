@@ -1,0 +1,31 @@
+<ng-container *ngIf="showShell; else plainRouter">
+  <app-navbar (menuToggle)="toggleSidebar()"></app-navbar>
+
+  <mat-sidenav-container class="app-shell">
+    <mat-sidenav
+      [mode]="isMobile ? 'over' : 'side'"
+      [opened]="sidebarOpen"
+      (openedChange)="sidebarOpen = $event"
+      class="app-sidenav"
+    >
+      <mat-nav-list>
+        <ng-container *ngFor="let item of navItems">
+          <a mat-list-item *ngIf="!item.adminOnly || isAdmin" [routerLink]="item.route" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' || item.route === '/profile' }">
+            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+            <span matListItemTitle class="nav-text">{{ item.label }}</span>
+          </a>
+        </ng-container>
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <mat-sidenav-content class="app-content" (scroll)="onContentScroll()">
+      <div class="app-content-inner">
+        <router-outlet></router-outlet>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</ng-container>
+
+<ng-template #plainRouter>
+  <router-outlet></router-outlet>
+</ng-template>

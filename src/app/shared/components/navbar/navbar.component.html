@@ -1,0 +1,102 @@
+<header class="topbar" *ngIf="isAuthenticated">
+  <div class="topbar-left">
+    <a class="brand-anchor" routerLink="/dashboard">
+      <span class="brand-icon">directions_bus</span>
+      <span class="brand-name">MoviRuta</span>
+    </a>
+
+    <button mat-icon-button class="menu-trigger" (click)="menuToggle.emit()" matTooltip="Expandir o contraer menu">
+      <mat-icon>menu</mat-icon>
+    </button>
+
+    <div class="page-copy">
+      <span class="eyebrow">Movilidad Inteligente</span>
+      <h1>{{ pageTitle }}</h1>
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <button class="quick-chip" matTooltip="Vista operacional activa">
+      <mat-icon>route</mat-icon>
+      <span>Operaciones</span>
+    </button>
+
+    <div class="notifications-wrapper">
+      <button class="icon-button" (click)="toggleNotifications()" matTooltip="Notificaciones">
+        <mat-icon>notifications</mat-icon>
+        <span class="notification-badge" *ngIf="notificationCount > 0">{{ notificationCount > 9 ? '9+' : notificationCount }}</span>
+      </button>
+
+      <div class="notifications-panel" [class.show]="isNotificationsOpen">
+        <div class="panel-header">
+          <div>
+            <strong>Actividad reciente</strong>
+            <p>Cambios relevantes en roles y permisos</p>
+          </div>
+        </div>
+
+        <div class="panel-empty" *ngIf="notifications.length === 0">
+          No hay eventos recientes para mostrar.
+        </div>
+
+        <div class="panel-list" *ngIf="notifications.length > 0">
+          <article class="panel-item" *ngFor="let notification of notifications">
+            <span class="item-type" [class]="notification.type">{{ notification.type }}</span>
+            <div class="item-copy">
+              <strong>{{ notification.title }}</strong>
+              <p>{{ notification.message }}</p>
+              <small>{{ formatNotificationDate(notification.createdAt) }}</small>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <button class="icon-button" (click)="themeService.toggleTheme()" [matTooltip]="themeService.isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'">
+      <mat-icon>{{ themeService.isDark ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
+    <div class="user-menu">
+      <button class="user-trigger" (click)="toggleMenu()" matTooltip="Cuenta">
+        <div class="user-avatar" *ngIf="!profile?.photo || avatarError">{{ userInitials }}</div>
+        <img
+          *ngIf="profile?.photo && !avatarError"
+          [src]="profile!.photo"
+          alt="Avatar"
+          class="user-avatar-photo"
+          (error)="onAvatarError()"
+          referrerpolicy="no-referrer"
+        />
+        <div class="user-copy">
+          <strong>{{ currentUser?.name || 'Operador' }}</strong>
+          <span>{{ userRoles[0] || 'Usuario autenticado' }}</span>
+        </div>
+        <mat-icon>expand_more</mat-icon>
+      </button>
+
+      <div class="user-panel" [class.show]="isMenuOpen">
+        <div class="user-panel-header">
+          <div>
+            <strong>{{ currentUser?.name || 'Operador' }}</strong>
+            <p>{{ currentUser?.email }}</p>
+          </div>
+        </div>
+
+        <a routerLink="/profile" class="panel-action" (click)="closeAllMenus()">
+          <mat-icon>person</mat-icon>
+          <span>Mi perfil</span>
+        </a>
+        <a routerLink="/profile" [queryParams]="{ section: 'sessions' }" class="panel-action" (click)="closeAllMenus()">
+          <mat-icon>devices</mat-icon>
+          <span>Mis sesiones</span>
+        </a>
+        <button class="panel-action danger" (click)="logout()" [disabled]="loggingOut">
+          <mat-icon>{{ loggingOut ? 'hourglass_empty' : 'logout' }}</mat-icon>
+          <span>{{ loggingOut ? 'Cerrando...' : 'Cerrar sesion' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="topbar-overlay" [class.show]="isMenuOpen || isNotificationsOpen" (click)="closeAllMenus()"></div>
+</header>

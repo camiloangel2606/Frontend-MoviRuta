@@ -1,0 +1,411 @@
+// Variables CSS para tema oscuro
+$primary-color: var(--color-primary);
+$text-color: var(--text-primary);
+$text-light: var(--text-secondary);
+$bg-color: var(--bg-secondary);
+$card-bg: var(--bg-card);
+$border-color: var(--border-color);
+
+// Container principal
+.verify-2fa-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--gradient-header);
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: background 0.3s ease;
+}
+
+.verify-2fa-card {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  background: $card-bg;
+  overflow: hidden;
+  border: 1px solid $border-color;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+// Header
+mat-card-header {
+  background: var(--gradient-header);
+  color: white;
+  padding: 30px 24px;
+  margin: -16px -16px 20px -16px;
+
+  mat-card-title {
+    margin: 0;
+    padding: 0;
+
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin: 0;
+      text-align: center;
+    }
+  }
+
+  mat-card-subtitle {
+    margin: 12px 0 0 0;
+    opacity: 0.95;
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.4;
+
+      strong {
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// Contenido
+mat-card-content {
+  padding: 30px 24px;
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+}
+
+// Spinner de carga
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px 20px;
+
+  p {
+    color: $primary-color;
+    font-weight: 500;
+    font-size: 16px;
+  }
+}
+
+.verification-status {
+  padding: 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(37, 145, 255, 0.1), rgba(51, 209, 183, 0.08));
+  border: 1px solid rgba(37, 145, 255, 0.16);
+  text-align: center;
+
+  p {
+    margin: 10px 0 0;
+    color: $text-light;
+  }
+
+  &.expired {
+    background: rgba(249, 115, 22, 0.08);
+    border-color: rgba(249, 115, 22, 0.18);
+  }
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(37, 145, 255, 0.12);
+  color: var(--app-brand-700);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+// Temporizador
+.timer-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: $bg-color;
+  border-radius: 8px;
+
+  .timer-label {
+    margin: 0;
+    font-size: 14px;
+    color: $text-light;
+    font-weight: 500;
+  }
+
+  .timer {
+    font-size: 32px;
+    font-weight: 700;
+    font-family: 'Monaco', 'Courier New', monospace;
+    color: $primary-color;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+
+    &.warning {
+      color: var(--color-accent);
+      animation: pulse 1s infinite;
+    }
+
+    &.expired {
+      color: var(--color-danger);
+    }
+  }
+
+  .timer-warning {
+    margin: 0;
+    font-size: 12px;
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+}
+
+// Grupo de inputs OTP
+.otp-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .otp-input-label {
+    text-align: center;
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      color: $text-light;
+      font-weight: 500;
+    }
+  }
+
+  .otp-inputs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+
+    .otp-separator {
+      color: $text-light;
+      font-weight: 300;
+      user-select: none;
+    }
+
+    .otp-input {
+      width: 50px;
+      height: 50px;
+      padding: 0;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 600;
+      border: 2px solid $border-color;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      font-family: 'Monaco', 'Courier New', monospace;
+      background: $card-bg;
+      color: $text-color;
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.2);
+        background-color: $bg-color;
+      }
+
+      &:hover {
+        border-color: $text-light;
+      }
+
+      &:disabled {
+        background-color: $bg-color;
+        color: $text-light;
+        cursor: not-allowed;
+        border-color: $border-color;
+        opacity: 0.7;
+      }
+
+      &::placeholder {
+        color: $text-light;
+        font-weight: 300;
+      }
+    }
+  }
+}
+
+// Botones de acción
+.action-buttons {
+  display: flex;
+  gap: 12px;
+
+  .verify-button {
+    flex: 1;
+    height: 48px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+
+    &:not(:disabled) {
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(21, 101, 192, 0.3);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
+}
+
+// Sección Resend
+.resend-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: $bg-color;
+  border-radius: 8px;
+
+  .resend-label {
+    margin: 0;
+    font-size: 14px;
+    color: $text-light;
+    font-weight: 500;
+  }
+
+  .resend-button {
+    height: 40px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: $primary-color;
+    border-color: $primary-color;
+    transition: all 0.3s ease;
+
+    &:not(:disabled) {
+      &:hover {
+        background-color: rgba(21, 101, 192, 0.1);
+        border-color: $primary-color;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Información de seguridad
+.security-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(33, 150, 243, 0.1);
+  border-radius: 8px;
+  border-left: 4px solid $primary-color;
+
+  .info-icon {
+    margin: 0;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .info-text {
+    margin: 0;
+    font-size: 13px;
+    color: $primary-color;
+    line-height: 1.5;
+  }
+}
+
+// Animaciones
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+// Responsive design
+@media (max-width: 480px) {
+  .verify-2fa-container {
+    padding: 16px;
+  }
+
+  .verify-2fa-card {
+    border-radius: 8px;
+  }
+
+  mat-card-header {
+    padding: 24px 16px;
+    margin: -16px -16px 16px -16px;
+
+    mat-card-title h1 {
+      font-size: 24px;
+    }
+
+    mat-card-subtitle p {
+      font-size: 13px;
+    }
+  }
+
+  mat-card-content {
+    padding: 20px 16px;
+
+    form {
+      gap: 16px;
+    }
+  }
+
+  .timer {
+    font-size: 28px !important;
+  }
+
+  .otp-inputs {
+    gap: 6px;
+
+    .otp-input {
+      width: 44px;
+      height: 44px;
+      font-size: 20px;
+    }
+  }
+
+  .action-buttons .verify-button {
+    height: 44px;
+    font-size: 14px;
+  }
+
+  .resend-button {
+    width: 100%;
+  }
+}

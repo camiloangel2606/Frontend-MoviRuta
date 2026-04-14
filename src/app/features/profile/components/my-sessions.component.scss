@@ -1,0 +1,333 @@
+// Variables CSS para tema moderno
+$primary-color: var(--color-primary);
+$text-color: var(--text-primary);
+$text-light: var(--text-secondary);
+$bg-color: var(--bg-secondary);
+$card-bg: var(--bg-card);
+$glass-bg: var(--bg-glass);
+$border-color: var(--border-color);
+$border-glass: var(--border-glass);
+$accent-color: var(--color-accent);
+$accent-light: var(--color-accent-light);
+
+.sessions-container {
+  margin-top: 24px;
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  background: $glass-bg;
+  backdrop-filter: blur(var(--blur-sm));
+  border: 1px solid $border-glass;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease;
+
+  // Accent line with gradient
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, $primary-color, var(--color-info));
+    border-radius: 4px 0 0 4px;
+  }
+}
+
+.sessions-header {
+  margin-bottom: 24px;
+
+  h2 {
+    margin: 0 0 8px;
+    color: $text-color;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .sessions-subtitle {
+    margin: 0;
+    color: $text-light;
+    font-size: 14px;
+  }
+}
+
+// Alertas
+.alert {
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeIn 0.4s ease;
+
+  p {
+    margin: 0;
+  }
+
+  &.alert-error {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(248, 113, 113, 0.08));
+    color: var(--color-danger);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+  }
+
+  &.alert-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(52, 211, 153, 0.08));
+    color: var(--color-secondary);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// Estado de carga
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 16px;
+  color: $text-light;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid $border-color;
+    border-top-color: $primary-color;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// Lista de sesiones
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.session-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: $card-bg;
+  border: 2px solid $border-color;
+  border-radius: var(--radius-md);
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: $primary-color;
+    transform: translateX(4px);
+  }
+
+  &.current-session {
+    border-color: var(--color-secondary);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(52, 211, 153, 0.04));
+
+    .session-icon {
+      background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-light));
+    }
+  }
+}
+
+.session-icon {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $primary-color, var(--color-info));
+  border-radius: var(--radius-md);
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.session-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.session-title {
+  font-weight: 600;
+  color: $text-color;
+  font-size: 15px;
+  margin-bottom: 8px;
+
+  .current-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-light));
+    color: white;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+}
+
+.session-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 6px;
+
+  .detail-item {
+    font-size: 13px;
+    color: $text-light;
+  }
+
+  .time-remaining {
+    color: $accent-color;
+    font-weight: 500;
+  }
+}
+
+.session-user {
+  font-size: 12px;
+  color: $text-light;
+}
+
+.session-actions {
+  flex-shrink: 0;
+}
+
+.btn-close-session {
+  padding: 10px 18px;
+  border: 2px solid var(--color-danger);
+  background: transparent;
+  color: var(--color-danger);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--color-danger);
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.loading {
+    opacity: 0.7;
+  }
+}
+
+// Estado vacío
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: $text-light;
+
+  p {
+    margin: 0;
+    font-size: 16px;
+  }
+}
+
+// Acciones globales
+.global-actions {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid $border-color;
+  text-align: center;
+
+  .warning-text {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: $accent-color;
+  }
+}
+
+.btn-logout-all {
+  padding: 14px 28px;
+  border: none;
+  background: linear-gradient(135deg, var(--color-danger), #f87171);
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+// Sección de información
+.info-section {
+  margin-top: 24px;
+  padding: 20px;
+  background: $bg-color;
+  border-radius: var(--radius-md);
+  border: 1px solid $border-color;
+
+  h4 {
+    margin: 0 0 12px;
+    color: $text-color;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: $text-light;
+    line-height: 1.6;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    strong {
+      color: $accent-color;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 600px) {
+  .session-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .session-actions {
+    width: 100%;
+
+    .btn-close-session {
+      width: 100%;
+    }
+  }
+
+  .session-details {
+    justify-content: center;
+  }
+}

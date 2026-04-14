@@ -1,0 +1,22 @@
+.table-state {
+  padding: 20px 22px;
+  color: var(--app-text-soft);
+}
+
+table {
+  width: 100%;
+}
+
+.role-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.role-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--app-brand), var(--app-support));
+  box-shadow: 0 0 0 6px rgba(37, 145, 255, 0.1);
+}

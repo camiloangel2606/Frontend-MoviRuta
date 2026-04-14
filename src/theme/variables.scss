@@ -1,0 +1,29 @@
+// Colores principales - Sistema de Transporte Inteligente
+$primary-color: var(--app-brand);
+$accent-color: var(--app-support);
+$warn-color: var(--app-danger);
+$success-color: var(--app-success);
+$dark-color: var(--app-text-strong);
+$light-color: var(--app-surface);
+
+// Espacios
+$spacing-xs: 0.25rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+$spacing-xl: 2rem;
+
+// Breakpoints responsive
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+
+// Sombras
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+$shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
+
+// Bordes
+$border-radius: 8px;
+$border-radius-sm: 4px;

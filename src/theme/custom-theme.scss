@@ -1,0 +1,36 @@
+@use '@angular/material' as mat;
+
+// Incluir estilos base
+@include mat.core();
+
+// Estilos globales personalizados
+
+
+/* Espaciado para formularios */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+/* Links */
+a {
+  color: var(--app-brand);
+  text-decoration: none;
+  transition: color 0.3s;
+
+  &:hover {
+    color: var(--app-brand-700);
+  }
+}
+
+/* Texto pequeño */
+.text-small {
+  font-size: 0.875rem;
+  color: var(--app-text-soft);
+}
+
+/* Error text */
+.error-text {
+  color: var(--app-danger);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
