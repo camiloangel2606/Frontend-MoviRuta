@@ -29,34 +29,38 @@ export class ApiService {
     return headers;
   }
 
-  get<T>(endpoint: string): Observable<T> {
-    const url = `${this.apiUrl}${endpoint}`;
+  // Modificado: Si el endpoint ya es una URL completa (http...), la usa directamente
+  private buildUrl(endpoint: string): string {
+    return endpoint.startsWith('http') ? endpoint : `${this.apiUrl}${endpoint}`;
+  }
 
-    return this.http.get<T>(url, { headers: this.getHeaders() }).pipe(
+  get<T>(endpoint: string): Observable<T> {
+    return this.http.get<T>(this.buildUrl(endpoint), { headers: this.getHeaders() }).pipe(
       catchError(error => this.handleError(error))
     );
   }
 
   post<T>(endpoint: string, body: any = {}): Observable<T> {
-    const url = `${this.apiUrl}${endpoint}`;
-
-    return this.http.post<T>(url, body, { headers: this.getHeaders() }).pipe(
+    return this.http.post<T>(this.buildUrl(endpoint), body, { headers: this.getHeaders() }).pipe(
       catchError(error => this.handleError(error))
     );
   }
 
   put<T>(endpoint: string, body: any = {}): Observable<T> {
-    const url = `${this.apiUrl}${endpoint}`;
+    return this.http.put<T>(this.buildUrl(endpoint), body, { headers: this.getHeaders() }).pipe(
+      catchError(error => this.handleError(error))
+    );
+  }
 
-    return this.http.put<T>(url, body, { headers: this.getHeaders() }).pipe(
+  // NUEVO MÉTODO: Agregado el soporte para PATCH que requería el DTO de Ciudadano
+  patch<T>(endpoint: string, body: any = {}): Observable<T> {
+    return this.http.patch<T>(this.buildUrl(endpoint), body, { headers: this.getHeaders() }).pipe(
       catchError(error => this.handleError(error))
     );
   }
 
   delete<T>(endpoint: string): Observable<T> {
-    const url = `${this.apiUrl}${endpoint}`;
-
-    return this.http.delete<T>(url, { headers: this.getHeaders() }).pipe(
+    return this.http.delete<T>(this.buildUrl(endpoint), { headers: this.getHeaders() }).pipe(
       catchError(error => this.handleError(error))
     );
   }

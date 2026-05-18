@@ -4,13 +4,9 @@ import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
-  path: '',
-  redirectTo: 'home',
-  pathMatch: 'full'
-  },
-  {
-    path: 'home',
-    loadComponent: () => import('./features/home/home.component').then(m => m.HomePage)
+    path: '',
+    redirectTo: 'dashboard',
+    pathMatch: 'full'
   },
   {
     path: 'login',
@@ -60,6 +56,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'home'
+    redirectTo: 'dashboard'
   }
 ];

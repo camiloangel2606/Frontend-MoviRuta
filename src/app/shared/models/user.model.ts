@@ -19,6 +19,8 @@ export interface Profile {
   phone?: string;
   photo?: string;
   user: User;
+  fechaNacimiento?: string | Date;
+  birthday?: string | Date;
 }
 
 export interface UserProfile extends User {
