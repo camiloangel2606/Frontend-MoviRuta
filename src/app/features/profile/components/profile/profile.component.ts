@@ -39,16 +39,11 @@ export class ProfileComponent implements OnInit {
   showProfileEdit = false;
   showChangePassword = false;
   showMySessions = false;
-  showMetodosPago = false;
-  showDirecciones = false;
 
-  metodosPago: any[] = [];
-  direcciones: any[] = [];
-  personaMysql: any = null; // <-- Guardará la información de la BD de Negocio
+  personaMysql: any = null; // Guardará la información de la BD de Negocio
+  negocioPersonaId: number | null = null;
 
   fechaNacimientoForm!: FormGroup;
-  metodoPagoForm!: FormGroup;
-  direccionForm!: FormGroup;
 
   constructor(
     private auth: AuthService,
@@ -75,19 +70,6 @@ export class ProfileComponent implements OnInit {
   private initNuevosFormularios(): void {
     this.fechaNacimientoForm = this.fb.group({
       fecha: ['', [Validators.required]]
-    });
-
-    this.metodoPagoForm = this.fb.group({
-      nombre: ['', [Validators.required, Validators.maxLength(120)]],
-      tipo: ['TARJETA_CREDITO', [Validators.required]]
-    });
-
-    this.direccionForm = this.fb.group({
-      linea1: ['', [Validators.required, Validators.maxLength(200)]],
-      linea2: ['', [Validators.maxLength(200)]],
-      ciudad: ['', [Validators.required, Validators.maxLength(120)]],
-      departamento: ['', [Validators.required, Validators.maxLength(120)]],
-      codigoPostal: ['', [Validators.maxLength(20)]]
     });
   }
 
@@ -124,8 +106,8 @@ export class ProfileComponent implements OnInit {
     this.profileService.verificarOIdPersonaNegocio(securityUserId).subscribe({
       next: (persona) => {
         this.personaMysql = persona;
+        this.setNegocioPersonaId(persona);
         this.loading = false;
-        this.cargarDatosNegocio();
         this.cdr.detectChanges();
       },
       error: (err: any) => {
@@ -142,16 +124,17 @@ export class ProfileComponent implements OnInit {
             securityUserId: securityUserId
           };
 
-          // Registrar automáticamente en MySQL
+          // Registrar automáticamente en MySQL (esto creará también al Ciudadano en cascada)
           this.profileService.crearPersonaNegocio(payloadPersona).subscribe({
             next: (nuevaPersona) => {
               this.personaMysql = nuevaPersona;
+              this.setNegocioPersonaId(nuevaPersona);
               this.loading = false;
-              this.cargarDatosNegocio();
               this.cdr.detectChanges();
             },
             error: (createErr) => {
-              console.error('Error al registrar persona en negocio:', createErr);
+              console.error('Error detallado del backend:', createErr);
+              alert(`Error de sincronización: ${createErr.error?.message || createErr.message}`);
               this.loading = false;
               this.cdr.detectChanges();
             }
@@ -164,33 +147,26 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  cargarDatosNegocio(): void {
-    this.profileService.getMetodosPago().subscribe({ 
-      next: (data: any[]) => {
-        this.metodosPago = data || [];
-        this.cdr.detectChanges();
-      },
-      error: (err: any) => console.error('Error metodos pago:', err)
-    });
-
-    this.profileService.getDirecciones().subscribe({ 
-      next: (data: any[]) => {
-        this.direcciones = data || [];
-        this.cdr.detectChanges();
-      },
-      error: (err: any) => console.error('Error direcciones:', err)
-    });
-  }
-
   private getProfileId(): string | null {
     if (!this.profile) return null;
     return this.profile.id || (this.profile as any)._id || null;
   }
 
+  private setNegocioPersonaId(persona: any): void {
+    const idValue = persona?.id;
+    if (idValue === null || idValue === undefined) {
+      this.negocioPersonaId = null;
+      return;
+    }
+    this.negocioPersonaId = typeof idValue === 'number' ? idValue : Number(idValue);
+    if (Number.isNaN(this.negocioPersonaId)) {
+      this.negocioPersonaId = null;
+    }
+  }
+
   guardarFechaNacimiento(): void {
-    const profileId = this.getProfileId();
-    if (this.fechaNacimientoForm.valid && profileId) {
-      this.profileService.updateFechaNacimiento(profileId, this.fechaNacimientoForm.value.fecha).subscribe({
+    if (this.fechaNacimientoForm.valid && this.negocioPersonaId !== null) {
+      this.profileService.updateFechaNacimiento(String(this.negocioPersonaId), this.fechaNacimientoForm.value.fecha).subscribe({
         next: () => {
           alert('Fecha de nacimiento registrada.');
           this.reloadProfile();
@@ -200,51 +176,15 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  agregarMetodoPago(): void {
-    if (this.metodoPagoForm.valid) {
-      const { nombre, tipo } = this.metodoPagoForm.value;
-      this.profileService.createMetodoPago(nombre, tipo).subscribe({
-        next: (nuevo: any) => {
-          this.metodosPago.push(nuevo);
-          this.metodoPagoForm.reset({ tipo: 'TARJETA_CREDITO' });
-          this.cdr.detectChanges();
-        },
-        error: (err: any) => alert('Error en DTO Método de Pago: ' + err.message)
-      });
-    }
-  }
-
-  agregarDireccion(): void {
-    // Usamos el id numérico de MySQL que guardamos en personaMysql para la relación correcta
-    if (this.direccionForm.valid && this.personaMysql) {
-      const nuevaDireccion = {
-        ...this.direccionForm.value,
-        personaId: this.personaMysql.id // Relación limpia con tu tabla de MySQL
-      };
-      this.profileService.createDireccion(nuevaDireccion).subscribe({
-        next: (nuevo: any) => {
-          this.direcciones.push(nuevo);
-          this.direccionForm.reset();
-          this.cdr.detectChanges();
-        },
-        error: (err: any) => alert('Error en DTO Dirección: ' + err.message)
-      });
-    }
-  }
-
   private resetAllSections(): void {
     this.showProfileEdit = false;
     this.showChangePassword = false;
     this.showMySessions = false;
-    this.showMetodosPago = false;
-    this.showDirecciones = false;
   }
 
   toggleProfileEdit(): void { const state = !this.showProfileEdit; this.resetAllSections(); this.showProfileEdit = state; }
   toggleChangePassword(): void { const state = !this.showChangePassword; this.resetAllSections(); this.showChangePassword = state; }
   toggleMySessions(): void { const state = !this.showMySessions; this.resetAllSections(); this.showMySessions = state; }
-  toggleMetodosPago(): void { const state = !this.showMetodosPago; this.resetAllSections(); this.showMetodosPago = state; }
-  toggleDirecciones(): void { const state = !this.showDirecciones; this.resetAllSections(); this.showDirecciones = state; }
 
   reloadProfile(): void { this.loadProfileFromBackend(); }
   logout(): void { this.auth.logout(); this.router.navigate(['/login']); }

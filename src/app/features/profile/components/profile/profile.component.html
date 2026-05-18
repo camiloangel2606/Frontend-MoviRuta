@@ -94,15 +94,6 @@
           {{ showChangePassword ? 'Cerrar cambio' : 'Cambiar contrasena' }}
         </button>
         
-        <button class="action-btn" style="background-color: #4f46e5; color: white;" (click)="toggleMetodosPago()" matTooltip="Gestionar tus tarjetas y billeteras virtuales">
-          <mat-icon>credit_card</mat-icon>
-          {{ showMetodosPago ? 'Cerrar pagos' : 'Métodos de pago' }}
-        </button>
-
-        <button class="action-btn" style="background-color: #059669; color: white;" (click)="toggleDirecciones()" matTooltip="Gestionar tus ubicaciones residenciales">
-          <mat-icon>home_work</mat-icon>
-          {{ showDirecciones ? 'Cerrar direcciones' : 'Mis direcciones' }}
-        </button>
 
         <button class="action-btn tertiary" (click)="toggleMySessions()" matTooltip="Ver y gestionar dispositivos conectados">
           <mat-icon>devices</mat-icon>
@@ -110,7 +101,7 @@
         </button>
       </section>
 
-      <section class="profile-sections" *ngIf="showProfileEdit || showChangePassword || showMySessions || showMetodosPago || showDirecciones">
+      <section class="profile-sections" *ngIf="showProfileEdit || showChangePassword || showMySessions">
         <div class="section-divider"></div>
 
         <div class="profile-edit-section" *ngIf="showProfileEdit">
@@ -125,46 +116,6 @@
           <app-my-sessions></app-my-sessions>
         </div>
 
-        <div class="metodos-pago-section" *ngIf="showMetodosPago" style="padding: 1rem 0;">
-          <h4 style="font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem;">Gestionar Métodos de Pago</h4>
-          <div style="display: grid; grid-template-cols: 1fr; gap: 1.5rem;">
-            <form [formGroup]="metodoPagoForm" (ngSubmit)="agregarMetodoPago()" style="display: flex; flex-direction: column; gap: 0.8rem; background: #f9fafb; padding: 1rem; rounded: 8px; border: 1px solid #e5e7eb;">
-              <input type="text" formControlName="nombre" placeholder="Nombre (ej. Mi Tarjeta Débito)" maxlength="120" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-              <select formControlName="tipo" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-                <option value="TARJETA_CREDITO">Tarjeta de Crédito</option>
-                <option value="TARJETA_DEBITO">Tarjeta de Débito</option>
-                <option value="EFECTIVO">Efectivo</option>
-                <option value="MOVIL">Aplicación Móvil</option>
-              </select>
-              <button type="submit" [disabled]="metodoPagoForm.invalid" style="padding: 0.5rem; background: #4f46e5; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">+ Añadir Instrumento</button>
-            </form>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-              <div *ngFor="let m of metodosPago" style="padding: 0.8rem; border-left: 4px solid #4f46e5; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between;">
-                <strong>{{ m.nombre }}</strong> <span style="font-size: 0.8rem; text-transform: uppercase; color: #6b7280;">{{ m.tipo }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="direcciones-section" *ngIf="showDirecciones" style="padding: 1rem 0;">
-          <h4 style="font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem;">Mis ubicaciones específicas</h4>
-          <div style="display: grid; grid-template-cols: 1fr; gap: 1.5rem;">
-            <form [formGroup]="direccionForm" (ngSubmit)="agregarDireccion()" style="display: flex; flex-direction: column; gap: 0.8rem; background: #f9fafb; padding: 1rem; rounded: 8px; border: 1px solid #e5e7eb;">
-              <input type="text" formControlName="linea1" placeholder="Línea 1 (Calle, Carrera, Nro)*" maxlength="200" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-              <input type="text" formControlName="linea2" placeholder="Línea 2 (Apto, Bloque, Interior)" maxlength="200" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-              <input type="text" formControlName="ciudad" placeholder="Ciudad*" maxlength="120" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-              <input type="text" formControlName="departamento" placeholder="Departamento*" maxlength="120" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-              <input type="text" formControlName="codigoPostal" placeholder="Código Postal" maxlength="20" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-              <button type="submit" [disabled]="direccionForm.invalid" style="padding: 0.5rem; background: #059669; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Guardar Dirección</button>
-            </form>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-              <div *ngFor="let d of direcciones" style="padding: 0.8rem; border-left: 4px solid #059669; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <div><strong>{{ d.linea1 }}</strong> <span *ngIf="d.linea2" style="font-size: 0.9rem; color:#4b5563;">- {{ d.linea2 }}</span></div>
-                <div style="font-size: 0.8rem; color: #6b7280;">{{ d.ciudad }}, {{ d.departamento }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
 
       </section>
     </div>
