@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { tap, switchMap } from 'rxjs/operators';
 import { ApiService } from './api.service';
@@ -97,7 +97,9 @@ export class ProfileService {
   // ==========================================
 
   // Verifica si la persona existe en el negocio usando su UUID de seguridad
+  // Verifica si la persona existe en el negocio pasando el Token manualmente
   verificarOIdPersonaNegocio(securityUserId: string): Observable<any> {
+    // Petición simple SIN headers, el endpoint no requiere token
     return this.http.get<any>(`${this.nestApiUrl}/persona/security/${securityUserId}`);
   }
 
@@ -109,5 +111,17 @@ export class ProfileService {
   // Actualiza la fecha de nacimiento usando el ID numérico que comparten persona y ciudadano
   updateFechaNacimiento(ciudadanoId: string, fechaNacimiento: string): Observable<any> {
     return this.http.patch(`${this.nestApiUrl}/ciudadano/${ciudadanoId}`, { fechaNacimiento });
+  }
+  // ==========================================
+  // ROLES Y CONDUCTOR
+  // ==========================================
+
+  obtenerRolesDesdeSecurity(): Observable<any> {
+    // Usa el ApiService para delegar la inyección del token y la ruta
+    return this.api.get('/user-role/my-roles');
+  }
+
+  inicializarConductorEnNegocio(securityUserId: string): Observable<any> {
+    return this.http.post<any>(`${this.nestApiUrl}/persona/security/${securityUserId}/verificar-conductor`, {});
   }
 }

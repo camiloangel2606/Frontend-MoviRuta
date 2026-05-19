@@ -107,11 +107,12 @@ export class ProfileComponent implements OnInit {
       next: (persona) => {
         this.personaMysql = persona;
         this.setNegocioPersonaId(persona);
+        this.verificarYActivarFlujoConductor(securityUserId);
         this.loading = false;
         this.cdr.detectChanges();
       },
       error: (err: any) => {
-        // Si el backend de negocio responde 404 significa que la persona no existe en MySQL
+        // Si responde 404 significa que la persona no existe en MySQL
         if (err.status === 404) {
           const nombresCompletos = profile.user.name || 'Usuario';
           const spaceIndex = nombresCompletos.indexOf(' ');
@@ -129,6 +130,7 @@ export class ProfileComponent implements OnInit {
             next: (nuevaPersona) => {
               this.personaMysql = nuevaPersona;
               this.setNegocioPersonaId(nuevaPersona);
+              this.verificarYActivarFlujoConductor(securityUserId);
               this.loading = false;
               this.cdr.detectChanges();
             },
@@ -143,6 +145,25 @@ export class ProfileComponent implements OnInit {
           this.loading = false;
           this.cdr.detectChanges();
         }
+      }
+    });
+  }
+
+  // Método auxiliar: comprobación de roles y activación de flujo conductor
+  private verificarYActivarFlujoConductor(securityUserId: string): void {
+    this.profileService.obtenerRolesDesdeSecurity().subscribe({
+      next: (res) => {
+        // Soporta ambos formatos: objeto con roles o array directo
+        const listaRoles = res?.roles || (Array.isArray(res) ? res : []);
+        if (listaRoles.includes('CONDUCTOR') || listaRoles.includes('ROLE_CONDUCTOR')) {
+          this.profileService.inicializarConductorEnNegocio(securityUserId).subscribe({
+            next: () => console.log('[FRONTEND] Tabla conductor sincronizada correctamente en MySQL.'),
+            error: (err) => console.error('[FRONTEND] Error al intentar crear la fila de conductor en NestJS:', err)
+          });
+        }
+      },
+      error: (err) => {
+        console.error('[FRONTEND] No se pudieron obtener los roles del usuario:', err);
       }
     });
   }
