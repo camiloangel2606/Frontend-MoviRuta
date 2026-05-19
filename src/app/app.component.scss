@@ -16,6 +16,7 @@
   color: var(--app-text-inverse);
   padding: 88px 18px 24px;
   box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.1);
+  overflow: hidden; /* Elimina cualquier barra de scroll */
 }
 
 .sidenav-brand {

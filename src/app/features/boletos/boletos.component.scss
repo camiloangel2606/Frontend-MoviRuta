@@ -1,0 +1,246 @@
+// REUTILIZAMOS TU ESTRUCTURA CLON PARA ACOPLARSE AL LAYOUT DE PERFIL
+.profile-container {
+  width: 100%;
+  box-sizing: border-box;
+  // ⚡ SOLUCIÓN AL SOLAPAMIENTO: Añadimos un espaciado superior idéntico al de Perfil para empujar todo abajo del Navbar
+  padding: 40px 24px; 
+}
+
+.profile-wrapper.width-completo-layout {
+  max-width: 100% !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+// PANEL DIVIDIDO FLEX
+.panel-dividido-rutas {
+  display: flex;
+  gap: 24px;
+  margin-top: 24px;
+  width: 100%;
+  // Calibramos la altura para que encaje perfectamente en el Viewport sin empujar scrollbar general
+  height: calc(100vh - 320px); 
+  min-height: 500px;
+  box-sizing: border-box;
+
+  @media (max-width: 960px) {
+    flex-direction: column;
+    height: auto;
+    min-height: auto;
+  }
+}
+
+// SUBPANEL IZQUIERDO (FORMULARIO DE CONTROL DE ABORDAJE)
+.sub-panel-izquierdo {
+  width: 380px;
+  min-width: 380px;
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  @media (max-width: 960px) {
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+  }
+
+  ::ng-deep .mat-mdc-tab-group {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  ::ng-deep .mat-mdc-tab-body-wrapper {
+    flex: 1;
+    overflow: hidden;
+  }
+}
+
+.tab-contenido-interno {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.buscador-full {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+// CONTENEDOR CON SCROLL INTELIGENTE (Aplica tanto al formulario como al historial)
+.scroll-lista-elementos {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto; // Protege la tabla de desbordamientos laterales
+  padding-right: 4px;
+
+  &::-webkit-scrollbar { width: 5px; height: 5px; }
+  &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+}
+
+// GPS / CONTROLES DE ACCIÓN DE MOVIRUTA
+.texto-ayuda-gps { 
+  font-size: 12.5px; 
+  color: #475569; 
+  margin-bottom: 12px; 
+}
+
+.btn-gps-moviruta { 
+  width: 100%; 
+  margin-bottom: 16px !important; 
+  padding: 24px 16px !important; // Mismo padding robusto para botones táctiles
+  background-color: #0284c7 !important; // Azul MoviRuta primario
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: 8px !important;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #0369a1 !important;
+  }
+}
+
+// TARJETA DE SALDO PREPAGO EXPRESS
+.tarjeta-saldo-express {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  box-shadow: none !important;
+  border-radius: 16px !important;
+}
+
+// SUBPANEL DERECHO (CONTENEDOR DE LA TABLA DE PASAJES)
+.sub-panel-mapa {
+  flex: 1;
+  height: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+  padding: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 960px) {
+    width: 100%;
+    height: 500px;
+  }
+}
+
+.contenedor-marco-mapa {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+}
+
+// ALINEACIÓN Y DISEÑO DE LA CABECERA DEL HISTORIAL
+.tabla-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+}
+
+// BADGES CORPORATIVOS DE ESTADOS (ACTIVO, COMPLETADO, RUTA, ETC.)
+.tag-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  &.verde { background-color: #dcfce7; color: #166534; }
+  &.gris { background-color: #f1f5f9; color: #475569; }
+  &.naranja { background-color: #ffedd5; color: #9a3412; }
+}
+
+// ESTILIZACIÓN DE LA TABLA CORPORATIVA (MATERIAL TABLE)
+.corporative-table {
+  width: 100%;
+  background: transparent;
+
+  tr.mat-mdc-header-row {
+    background-color: #f8fafc;
+  }
+
+  th.mat-mdc-header-cell {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 12px;
+  }
+
+  td.mat-mdc-cell {
+    padding: 12px;
+    font-size: 13.5px;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  tr.corporative-row:hover {
+    background-color: #f8fafc;
+  }
+}
+
+// BOTÓN REDONDEADO PARA EL DESCENSO
+.btn-descenso-tabla {
+  border-radius: 20px !important;
+  font-weight: 600 !important;
+  font-size: 11.5px !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+
+  &:hover {
+    background-color: #fef2f2 !important;
+  }
+}
+
+// CAPA DE ESTADO INICIAL VACÍO
+.sin-datos-aviso {
+  text-align: center;
+  color: #94a3b8;
+  padding: 48px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  
+  mat-icon { 
+    font-size: 56px; 
+    width: 56px; 
+    height: 56px; 
+    color: #cbd5e1;
+    margin-bottom: 12px;
+  }
+  
+  p { 
+    font-size: 13.5px; 
+    color: #64748b;
+    margin: 0;
+    max-width: 320px;
+    line-height: 1.5;
+  }
+}
+
+.loader-centrado { 
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  padding: 24px 0; 
+}

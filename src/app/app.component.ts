@@ -46,7 +46,7 @@ export class AppComponent implements OnInit, OnDestroy {
     { label: 'Perfil', icon: 'person', route: '/profile' },
     // 🗺️ NUEVO: Módulo de Planificación de Viajes (Accesible para todos)
     { label: 'Planificar Rutas', icon: 'map', route: '/rutas' }, 
-    
+    { label: 'Boletos', icon: 'confirmation_number', route: '/movilidad/boletos' },
     // Rutas protegidas de administración
     { label: 'Usuarios', icon: 'groups', route: '/admin/users', adminOnly: true },
     { label: 'Roles', icon: 'verified_user', route: '/admin/roles', adminOnly: true },
