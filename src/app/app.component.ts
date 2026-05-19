@@ -44,6 +44,10 @@ export class AppComponent implements OnInit, OnDestroy {
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
     { label: 'Perfil', icon: 'person', route: '/profile' },
+    // 🗺️ NUEVO: Módulo de Planificación de Viajes (Accesible para todos)
+    { label: 'Planificar Rutas', icon: 'map', route: '/rutas' }, 
+    
+    // Rutas protegidas de administración
     { label: 'Usuarios', icon: 'groups', route: '/admin/users', adminOnly: true },
     { label: 'Roles', icon: 'verified_user', route: '/admin/roles', adminOnly: true },
     { label: 'Permisos', icon: 'policy', route: '/admin/permissions', adminOnly: true },

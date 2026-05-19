@@ -1,0 +1,339 @@
+// REUTILIZAMOS TU ESTRUCTURA CLON PARA ACOPLARSE AL LAYOUT DE PERFIL
+.profile-container {
+  width: 100%;
+  box-sizing: border-box;
+  // ⚡ SOLUCIÓN AL SOLAPAMIENTO: Añadimos un espaciado superior idéntico al de Perfil para empujar todo abajo del Navbar
+  padding: 40px 24px; 
+}
+
+.profile-wrapper.width-completo-layout {
+  max-width: 100% !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+// PANEL DIVIDIDO FLEX
+.panel-dividido-rutas {
+  display: flex;
+  gap: 24px;
+  margin-top: 24px;
+  width: 100%;
+  // Calibramos la altura para que encaje perfectamente en el Viewport sin empujar scrollbar general
+  height: calc(100vh - 320px); 
+  min-height: 500px;
+  box-sizing: border-box;
+
+  @media (max-width: 960px) {
+    flex-direction: column;
+    height: auto;
+    min-height: auto;
+  }
+}
+
+// SUBPANEL IZQUIERDO (CATÁLOGOS)
+.sub-panel-izquierdo {
+  width: 380px;
+  min-width: 380px;
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  @media (max-width: 960px) {
+    width: 100%;
+    min-width: 100%;
+    height: 400px;
+  }
+
+  ::ng-deep .mat-mdc-tab-group {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  ::ng-deep .mat-mdc-tab-body-wrapper {
+    flex: 1;
+    overflow: hidden;
+  }
+}
+
+.tab-contenido-interno {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.buscador-full {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.scroll-lista-elementos {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+}
+
+// TARJETAS DE RUTAS CORPORATIVAS
+.tarjeta-clon-moviruta {
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #e2e8f0 !important;
+  background: #ffffff;
+  box-shadow: none !important;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.04) !important;
+    border-color: #3b82f6 !important;
+  }
+
+  &.seleccionada {
+    border-left: 5px solid #083865 !important;
+    background-color: #f0f7ff;
+    border-color: #cbd5e1 !important;
+  }
+
+  &.paradero-borde {
+    cursor: default;
+    &:hover { transform: none; box-shadow: none !important; border-color: #e2e8f0 !important; }
+  }
+}
+
+.avatar-bus-icono {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.descripcion-texto {
+  font-size: 13px;
+  color: #64748b;
+  margin: 10px 0;
+  line-height: 1.4;
+}
+
+.info-badges-row {
+  display: flex;
+  gap: 8px;
+}
+
+.tag-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  &.verde { background-color: #f0fdf4; color: #15803d; }
+  &.naranja { background-color: #fff7ed; color: #c2410c; }
+}
+
+// GPS CONTROLES
+.texto-ayuda-gps { font-size: 12.5px; color: #475569; margin-bottom: 12px; }
+.btn-gps-moviruta { width: 100%; margin-bottom: 16px !important; padding: 12px 0 !important; }
+.avatar-numero-gps { background-color: #ef4444; color: white; font-weight: bold; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.tag-tipo-paradero { font-size: 11.5px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #475569; }
+
+// SUBPANEL MAPA
+.sub-panel-mapa {
+  flex: 1;
+  height: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+  padding: 16px;
+  overflow: hidden;
+
+  @media (max-width: 960px) {
+    width: 100%;
+    height: 450px;
+  }
+}
+
+.contenedor-marco-mapa {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  background-color: #f1f5f9;
+}
+
+// TEXTURA DE GRILLA URBANA SIMULADA
+.capa-mapa-activa.plano-urbano-grilla {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #e2e8f0;
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.titulo-flotante-mapa {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: #0f172a;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+// MARCADOR CENTRAL DE USUARIO
+.marcador-usuario-centro {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #2563eb;
+  z-index: 5;
+  mat-icon { font-size: 36px; width: 36px; height: 36px; }
+  .label-usuario {
+    background: #2563eb; color: white; font-size: 10px;
+    padding: 1px 5px; border-radius: 3px; font-weight: bold; margin-top: -2px;
+  }
+}
+
+.pulso-radar-onda {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border: 2px solid #2563eb;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.15);
+  animation: radarPulse 2s infinite ease-out;
+  top: -8px;
+}
+
+@keyframes radarPulse {
+  0% { transform: scale(0.4); opacity: 1; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+// PINES FLOTANTES DE LOS PARADEROS CERCANOS
+.marcador-paradero-flotante {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 4;
+  .icono-pin-rojo { color: #ef4444; font-size: 28px; width: 28px; height: 28px; }
+  .popover-pin-info {
+    background: white; border-radius: 6px; padding: 3px 6px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08); display: flex;
+    flex-direction: column; border-left: 3px solid #ef4444; font-size: 10px;
+    .numb { font-weight: bold; color: #ef4444; }
+    .name { color: #1e293b; font-weight: 500; }
+    .meters { color: #64748b; font-size: 9px; }
+  }
+}
+
+// 📦 SOLUCIÓN AL MAPA BLOQUEADO: Reducimos el ancho de la caja blanca para que flote a un lado y deje ver la grilla
+.caja-itinerario-linea {
+  position: absolute;
+  top: 65px;
+  bottom: 20px;
+  left: 20px;
+  width: 320px; // El itinerario se vuelve un panel flotante elegante tipo Google Maps
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 8;
+
+  @media (max-width: 600px) {
+    width: calc(100% - 40px);
+  }
+}
+
+.linea-vertical-transito {
+  position: absolute;
+  left: 32px;
+  top: 30px;
+  bottom: 30px;
+  width: 3px;
+  background: #083865;
+  z-index: 1;
+}
+
+.item-nodo-ruta {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  position: relative;
+  z-index: 2;
+  .punto-check-icono {
+    background: white; color: #3b82f6; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    mat-icon { font-size: 20px; width: 20px; height: 20px; }
+    &.extremo-nodo { color: #083865; transform: scale(1.1); }
+  }
+}
+
+.datos-nodo-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  .titulo-nodo { font-size: 13.5px; font-weight: 600; color: #0f172a; }
+  .sub-coordenadas { font-size: 11px; color: #64748b; }
+  .tipo-badge-nodo {
+    align-self: flex-start; font-size: 9.5px; background: #e2e8f0;
+    color: #334155; padding: 1px 5px; border-radius: 4px; margin-top: 4px;
+    &.terminal-style { background: #fee2e2; color: #991b1b; }
+  }
+}
+
+// CAPA DE ESTADO INICIAL VACÍO
+.capa-mapa-vacia {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px;
+  box-sizing: border-box;
+  color: #475569;
+  .icono-gigante-mapa { font-size: 72px; width: 72px; height: 72px; color: #94a3b8; margin-bottom: 12px; }
+  h2 { font-size: 19px; font-weight: 600; color: #1e293b; margin-bottom: 6px; }
+  p { font-size: 13px; line-height: 1.5; color: #64748b; max-width: 400px; }
+}
+
+.loader-centrado { display: flex; justify-content: center; align-items: center; padding: 24px 0; }
+.sin-datos-aviso {
+  text-align: center; color: #94a3b8; padding: 32px 16px;
+  mat-icon { font-size: 40px; width: 40px; height: 40px; }
+  p { font-size: 13px; margin-top: 4px; }
+}

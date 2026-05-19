@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { RutasComponent } from '../app/features/rutas/rutas.component';
 
 export const routes: Routes = [
   {
@@ -53,6 +54,10 @@ export const routes: Routes = [
   {
     path: 'test',
     loadComponent: () => import('./features/auth/test/test.component').then(m => m.TestComponent)
+  },
+  {
+    path: 'rutas',
+    component: RutasComponent
   },
   {
     path: '**',
