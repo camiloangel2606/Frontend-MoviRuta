@@ -33,6 +33,8 @@ export class RutasComponent implements OnInit {
   paraderosCercanos: Paradero[] = [];
   
   rutaSeleccionada: Ruta | null = null;
+  tiempoEstimadoTotal: number = 0;
+  paraderosMapa: any[] = [];
   filtroTexto: string = '';
   
   loadingRutas = false;
@@ -79,16 +81,38 @@ export class RutasComponent implements OnInit {
     }
   }
 
-  seleccionarRuta(ruta: Ruta): void {
-    this.loadingRutas = true;
-    this.planificacionService.getRutaDetalle(ruta.id).subscribe({
-      next: (res) => {
-        this.rutaSeleccionada = res;
-        this.loadingRutas = false;
-        // Aquí puedes invocar la renderización de tu mapa de Leaflet/GoogleMaps pasándole res.paraderos
-      },
-      error: () => this.loadingRutas = false
-    });
+  seleccionarRuta(ruta: any): void {
+    if (!ruta) return;
+
+    this.rutaSeleccionada = ruta;
+    this.paraderosCercanos = []; // Limpiamos el radar GPS
+
+    if (ruta.paraderosEnRuta && Array.isArray(ruta.paraderosEnRuta) && ruta.paraderosEnRuta.length > 0) {
+      // 1. Mapeamos los paraderos de manera segura
+      this.paraderosMapa = ruta.paraderosEnRuta.map((item: any) => {
+        return {
+          id: item?.paradero?.id,
+          nombre: item?.paradero?.nombre,
+          latitud: item?.paradero?.latitud,
+          longitud: item?.paradero?.longitud,
+          tipo: item?.paradero?.tipo,
+          orden: item?.orden
+        };
+      });
+
+      // 2. ⚡ CALCULAMOS EL TIEMPO TOTAL SUMANDO LOS MINUTOS DEL JSON REAL
+      this.tiempoEstimadoTotal = ruta.paraderosEnRuta.reduce((acc: number, item: any) => {
+        const minutos = Number(item?.tiempoEstimadoDesdeAnterior) || 0;
+        return acc + minutos;
+      }, 0);
+
+    } else {
+      this.paraderosMapa = [];
+      this.tiempoEstimadoTotal = 0;
+    }
+
+    // Forzamos el rediseño inmediato en pantalla
+    this.cdr.detectChanges(); 
   }
 
   obtenerParaderosCercanos(): void {

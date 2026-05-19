@@ -337,3 +337,43 @@
   mat-icon { font-size: 40px; width: 40px; height: 40px; }
   p { font-size: 13px; margin-top: 4px; }
 }
+
+// INDICADOR FLOTANTE DE TIEMPO TOTAL
+.indicador-tiempo-ruta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f0fdf4; // Verde pastel corporativo de éxito / ruta activa
+  border: 1px solid #bbf7d0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 5;
+
+  .icono-reloj {
+    color: #16a34a;
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+
+  .texto-tiempo {
+    display: flex;
+    flex-direction: column;
+    
+    .label {
+      font-size: 11px;
+      color: #166534;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+    }
+    
+    .minutos {
+      font-size: 14px;
+      font-weight: 700;
+      color: #14532d;
+    }
+  }
+}

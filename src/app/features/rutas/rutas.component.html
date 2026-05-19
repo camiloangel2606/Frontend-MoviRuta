@@ -120,17 +120,31 @@
             <div class="titulo-flotante-mapa">🗺️ Itinerario Secuencial: {{ rutaSeleccionada.nombre }}</div>
             
             <div class="caja-itinerario-linea">
+              
+              <div class="indicador-tiempo-ruta" *ngIf="paraderosMapa && paraderosMapa.length > 0">
+                <mat-icon class="icono-reloj">schedule</mat-icon>
+                <div class="texto-tiempo">
+                  <span class="label">Duración estimada:</span>
+                  <span class="minutos">{{ tiempoEstimadoTotal }} minutos</span>
+                </div>
+              </div>
+
               <div class="linea-vertical-transito"></div>
               
-              <div class="item-nodo-ruta" *ngFor="let nodo of rutaSeleccionada.paraderos; let primera = first; let ultima = last">
+              <div class="item-nodo-ruta" *ngFor="let nodo of paraderosMapa; let primera = first; let ultima = last">
                 <div class="punto-check-icono" [class.extremo-nodo]="primera || ultima">
                   <mat-icon>{{ primera ? 'play_circle' : (ultima ? 'flag' : 'radio_button_checked') }}</mat-icon>
                 </div>
                 <div class="datos-nodo-texto">
-                  <span class="titulo-nodo">{{ nodo.nombre }}</span>
+                  <span class="titulo-nodo">{{ nodo.nombre || 'Estación sin nombre' }}</span>
                   <span class="sub-coordenadas">Coordenadas: {{ nodo.latitud }}, {{ nodo.longitud }}</span>
                   <span class="tipo-badge-nodo" [class.terminal-style]="nodo.tipo === 'INTERCAMBIADOR'">{{ nodo.tipo }}</span>
                 </div>
+              </div>
+
+              <div *ngIf="!paraderosMapa || paraderosMapa.length === 0" class="sin-datos-aviso">
+                <mat-icon>wrong_location</mat-icon>
+                <p>Esta ruta no cuenta con paraderos asignados en la base de datos.</p>
               </div>
             </div>
           </div>
