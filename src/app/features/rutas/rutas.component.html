@@ -1,6 +1,7 @@
 <div class="profile-container">
   <div class="profile-wrapper width-completo-layout">
-    
+
+    <!-- Hero -->
     <section class="profile-hero">
       <div class="hero-copy">
         <span class="hero-kicker">
@@ -8,17 +9,25 @@
           Módulo de Tránsito
         </span>
         <h1>Planificación de Viajes</h1>
-        <p>Consulta las rutas disponibles del sistema urbano o localiza paraderos de transporte mediante tu GPS en tiempo real.</p>
+        <p>Consulta las rutas disponibles del sistema urbano o localiza paraderos
+           mediante tu GPS en tiempo real.</p>
       </div>
     </section>
 
     <div class="panel-dividido-rutas">
-      
+
+      <!-- ══════════════════════════════════════════════════════════════
+           PANEL IZQUIERDO
+      ══════════════════════════════════════════════════════════════ -->
       <div class="sub-panel-izquierdo">
-        <mat-tab-group animationDuration="0ms">
-          
+        <mat-tab-group
+          animationDuration="0ms"
+          (selectedTabChange)="alCambiarTab($event)">
+
+          <!-- Tab 0: Rutas del sistema -->
           <mat-tab label="Rutas del Sistema">
             <div class="tab-contenido-interno">
+
               <mat-form-field appearance="outline" class="buscador-full">
                 <mat-label>Buscar ruta por nombre o código...</mat-label>
                 <input matInput type="text" (input)="filtrarRutas($event)">
@@ -26,15 +35,17 @@
               </mat-form-field>
 
               <div class="scroll-lista-elementos">
+
                 <div *ngIf="loadingRutas" class="loader-centrado">
                   <mat-spinner diameter="40"></mat-spinner>
                 </div>
 
-                <div *ngIf="!loadingRutas">
-                  <mat-card *ngFor="let ruta of rutasFiltradas" 
-                            class="tarjeta-clon-moviruta" 
-                            [class.seleccionada]="rutaSeleccionada?.id === ruta.id"
-                            (click)="seleccionarRuta(ruta)">
+                <ng-container *ngIf="!loadingRutas">
+                  <mat-card
+                    *ngFor="let ruta of rutasFiltradas"
+                    class="tarjeta-clon-moviruta"
+                    [class.seleccionada]="rutaSeleccionada?.id === ruta.id"
+                    (click)="seleccionarRuta(ruta)">
                     <mat-card-header>
                       <div mat-card-avatar class="avatar-bus-icono">
                         <mat-icon>directions_bus</mat-icon>
@@ -45,141 +56,155 @@
                     <mat-card-content>
                       <p class="descripcion-texto">{{ ruta.descripcion }}</p>
                       <div class="info-badges-row">
-                        <span class="tag-badge verde">Tarifa: ${{ ruta.tarifa | number:'1.2-2' }}</span>
-                        <span class="tag-badge naranja" *ngIf="ruta.tiempoEstimadoTotal">⏱️ {{ ruta.tiempoEstimadoTotal }} mins</span>
+                        <span class="tag-badge verde">
+                          Tarifa: ${{ ruta.tarifa | number:'1.2-2' }}
+                        </span>
+                        <span class="tag-badge naranja" *ngIf="ruta.tiempoEstimadoTotal">
+                          ⏱️ {{ ruta.tiempoEstimadoTotal }} mins
+                        </span>
                       </div>
                     </mat-card-content>
                   </mat-card>
-                </div>
 
-                <div *ngIf="rutasFiltradas.length === 0 && !loadingRutas" class="sin-datos-aviso">
-                  <mat-icon>search_off</mat-icon>
-                  <p>No se encontraron rutas.</p>
-                </div>
-              </div>
-            </div>
-          </mat-tab>
-
-          <mat-tab label="Cerca de mí">
-            <div class="tab-contenido-interno">
-            <p class="texto-ayuda-gps">🎯 Encuentra las paradas autorizadas más cercanas usando el GPS de tu dispositivo.</p>
-            
-            <button mat-flat-button color="primary" class="btn-gps-moviruta" (click)="obtenerParaderosCercanos()" [disabled]="cargandoGps">
-              <mat-icon>{{ cargandoGps ? 'sync' : 'my_location' }}</mat-icon>
-              {{ cargandoGps ? 'Localizando por GPS...' : 'Buscar paraderos cercanos' }}
-            </button>
-
-            <div *ngIf="cargandoGps" class="loader-centrado">
-              <mat-spinner diameter="40"></mat-spinner>
-            </div>
-
-            <div class="scroll-lista-elementos" *ngIf="!cargandoGps && paraderosCercanos.length > 0">
-              <mat-card class="tarjeta-clon-moviruta paradero-borde" *ngFor="let p of paraderosCercanos">
-                <mat-card-header>
-                  <div mat-card-avatar class="avatar-numero-gps">📍</div>
-                  <mat-card-title>{{ p.nombre }}</mat-card-title>
-                  <mat-card-subtitle>
-                    <span class="tag-tipo-paradero">{{ p.tipo }}</span>
-                  </mat-card-subtitle>
-                </mat-card-header>
-                <mat-card-content>
-                  <p class="descripcion-texto">
-                    A <strong>{{ p.distancia }} metros</strong> de tu ubicación actual.
-                  </p>
-                  <div class="info-badges-row" style="margin-top: 8px; flex-wrap: wrap; display: flex; gap: 4px;">
-                
-                <ng-container *ngIf="p.rutasEnLasQueAparece && p.rutasEnLasQueAparece.length > 0">
-                  <span class="tag-badge verde" *ngFor="let item of p.rutasEnLasQueAparece">
-                    🚌 {{ item?.ruta?.nombre }}
-                  </span>
+                  <div *ngIf="rutasFiltradas.length === 0" class="sin-datos-aviso">
+                    <mat-icon>search_off</mat-icon>
+                    <p>No se encontraron rutas.</p>
+                  </div>
                 </ng-container>
 
-                <span class="tag-badge gris" *ngIf="!p.rutasEnLasQueAparece || p.rutasEnLasQueAparece.length === 0" style="background: #f3f4f6; color: #6b7280; font-size: 11px; padding: 2px 6px; border-radius: 4px;">
-                  🚫 Sin rutas asignadas
-                </span>
-
               </div>
-                </mat-card-content>
-              </mat-card>
             </div>
-          </div>
           </mat-tab>
+
+          <!-- Tab 1: Cerca de mí -->
+          <mat-tab label="Cerca de mí">
+            <div class="tab-contenido-interno">
+
+              <p class="texto-ayuda-gps">
+                🎯 Encuentra las paradas autorizadas más cercanas usando el GPS de tu dispositivo.
+              </p>
+
+              <button
+                mat-flat-button
+                color="primary"
+                class="btn-gps-moviruta"
+                (click)="obtenerParaderosCercanos()"
+                [disabled]="cargandoGps">
+                <mat-icon>{{ cargandoGps ? 'sync' : 'my_location' }}</mat-icon>
+                {{ cargandoGps ? 'Localizando por GPS...' : 'Buscar paraderos cercanos' }}
+              </button>
+
+              <div *ngIf="cargandoGps" class="loader-centrado">
+                <mat-spinner diameter="40"></mat-spinner>
+              </div>
+
+              <div
+                class="scroll-lista-elementos"
+                *ngIf="!cargandoGps && paraderosCercanos.length > 0">
+                <mat-card
+                  class="tarjeta-clon-moviruta paradero-borde"
+                  *ngFor="let p of paraderosCercanos; let i = index">
+                  <mat-card-header>
+                    <div mat-card-avatar class="avatar-numero-gps">📍</div>
+                    <mat-card-title>{{ p.nombre }}</mat-card-title>
+                    <mat-card-subtitle>
+                      <span class="tag-tipo-paradero">{{ p.tipo }}</span>
+                    </mat-card-subtitle>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <p class="descripcion-texto">
+                      A <strong>
+                        {{ p.distancia >= 1000
+                            ? (p.distancia / 1000 | number:'1.1-1') + ' km'
+                            : p.distancia + ' m' }}
+                      </strong> de tu ubicación actual.
+                    </p>
+                    <div class="info-badges-row"
+                         style="margin-top:8px;flex-wrap:wrap;display:flex;gap:4px;">
+                      <ng-container
+                        *ngIf="p.rutasEnLasQueAparece && p.rutasEnLasQueAparece.length > 0">
+                        <span
+                          class="tag-badge verde"
+                          *ngFor="let item of p.rutasEnLasQueAparece">
+                          🚌 {{ item?.ruta?.nombre }}
+                        </span>
+                      </ng-container>
+                      <span
+                        class="tag-badge gris"
+                        *ngIf="!p.rutasEnLasQueAparece || p.rutasEnLasQueAparece.length === 0">
+                        🚫 Sin rutas asignadas
+                      </span>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+
+            </div>
+          </mat-tab>
+
         </mat-tab-group>
       </div>
 
+      <!-- ══════════════════════════════════════════════════════════════
+           PANEL DERECHO — mapa Leaflet real
+      ══════════════════════════════════════════════════════════════ -->
       <div class="sub-panel-mapa">
         <div class="contenedor-marco-mapa">
-          
-          <div class="capa-mapa-activa plano-urbano-grilla" *ngIf="!rutaSeleccionada && miLatitud">
-              <div class="titulo-flotante-mapa">📡 Radar GPS: Paraderos a tu alrededor</div>
-              
-              <div class="marcador-usuario-centro" style="top: 50%; left: 50%; position: absolute; transform: translate(-50%, -50%); z-index: 10;">
-                <div class="pulso-radar-onda"></div>
-                <mat-icon style="color: #2563eb; font-size: 32px; width: 32px; height: 32px;">person_pin_circle</mat-icon>
-                <span class="label-usuario" style="background: #2563eb; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; white-space: nowrap;">TÚ ESTÁS AQUÍ</span>
-              </div>
 
-              <div class="marcador-paradero-flotante" 
-                   *ngFor="let p of paraderosCercanos; let i = index"
-                   style="position: absolute; transform: translate(-50%, -50%);"
-                   [style.top.%]="50 + (p.distancia > 5000 ? (i % 2 === 0 ? 35 : -35) : (p.distancia / 150) * (i % 2 === 0 ? 1 : -1))"
-                   [style.left.%]="50 + (p.distancia > 5000 ? (i % 2 === 0 ? -40 : 40) : (p.distancia / 150) * (i % 3 === 0 ? 1 : -1))">
-                
-                <mat-icon [style.color]="p.distancia < 2000 ? '#ef4444' : '#94a3b8'" style="font-size: 28px; width: 28px; height: 28px;">location_on</mat-icon>
-                
-                <div class="popover-pin-info">
-                  <span class="numb">#{{ i + 1 }}</span>
-                  <span class="name">{{ p.nombre }}</span>
-                  <span class="meters" [style.color]="p.distancia > 5000 ? '#78716c' : '#b91c1c'">
-                    ⏱️ {{ p.distancia >= 1000 ? (p.distancia / 1000 | number:'1.1-1') + ' km' : p.distancia + ' m' }}
-                  </span>
-                </div>
+          <!-- Mapa Leaflet: SIEMPRE en el DOM para que Leaflet pueda medirlo -->
+          <div id="map" class="leaflet-map-real"></div>
+
+          <!-- Overlay: itinerario de ruta seleccionada -->
+          <div class="caja-itinerario-linea" *ngIf="rutaSeleccionada">
+
+            <div
+              class="indicador-tiempo-ruta"
+              *ngIf="paraderosMapa && paraderosMapa.length > 0">
+              <mat-icon class="icono-reloj">schedule</mat-icon>
+              <div class="texto-tiempo">
+                <span class="label">Duración estimada:</span>
+                <span class="minutos">{{ tiempoEstimadoTotal }} minutos</span>
               </div>
             </div>
 
-            <div class="capa-mapa-vacia" *ngIf="!rutaSeleccionada && !miLatitud && !cargandoGps">
-              <mat-icon class="icono-gigante-mapa">map</mat-icon>
-              <h2>Visor Geográfico de MoviRuta</h2>
-              <p>Selecciona una ruta del catálogo izquierdo para trazar su itinerario secuencial o activa el GPS para ubicar los paraderos más cercanos a tu posición actual.</p>
-            </div>
+            <div class="linea-vertical-transito"></div>
 
-          <div class="capa-mapa-activa plano-urbano-grilla" *ngIf="rutaSeleccionada">
-            <div class="titulo-flotante-mapa">🗺️ Itinerario Secuencial: {{ rutaSeleccionada.nombre }}</div>
-            
-            <div class="caja-itinerario-linea">
-              
-              <div class="indicador-tiempo-ruta" *ngIf="paraderosMapa && paraderosMapa.length > 0">
-                <mat-icon class="icono-reloj">schedule</mat-icon>
-                <div class="texto-tiempo">
-                  <span class="label">Duración estimada:</span>
-                  <span class="minutos">{{ tiempoEstimadoTotal }} minutos</span>
-                </div>
+            <div
+              class="item-nodo-ruta"
+              *ngFor="let nodo of paraderosMapa; let primera = first; let ultima = last">
+              <div class="punto-check-icono" [class.extremo-nodo]="primera || ultima">
+                <mat-icon>
+                  {{ primera ? 'play_circle' : (ultima ? 'flag' : 'radio_button_checked') }}
+                </mat-icon>
               </div>
-
-              <div class="linea-vertical-transito"></div>
-              
-              <div class="item-nodo-ruta" *ngFor="let nodo of paraderosMapa; let primera = first; let ultima = last">
-                <div class="punto-check-icono" [class.extremo-nodo]="primera || ultima">
-                  <mat-icon>{{ primera ? 'play_circle' : (ultima ? 'flag' : 'radio_button_checked') }}</mat-icon>
-                </div>
-                <div class="datos-nodo-texto">
-                  <span class="titulo-nodo">{{ nodo.nombre || 'Estación sin nombre' }}</span>
-                  <span class="sub-coordenadas">Coordenadas: {{ nodo.latitud }}, {{ nodo.longitud }}</span>
-                  <span class="tipo-badge-nodo" [class.terminal-style]="nodo.tipo === 'INTERCAMBIADOR'">{{ nodo.tipo }}</span>
-                </div>
-              </div>
-
-              <div *ngIf="!paraderosMapa || paraderosMapa.length === 0" class="sin-datos-aviso">
-                <mat-icon>wrong_location</mat-icon>
-                <p>Esta ruta no cuenta con paraderos asignados en la base de datos.</p>
+              <div class="datos-nodo-texto">
+                <span class="titulo-nodo">{{ nodo.nombre || 'Estación sin nombre' }}</span>
+                <span class="sub-coordenadas">{{ nodo.latitud }}, {{ nodo.longitud }}</span>
+                <span
+                  class="tipo-badge-nodo"
+                  [class.terminal-style]="nodo.tipo === 'INTERCAMBIADOR'">
+                  {{ nodo.tipo }}
+                </span>
               </div>
             </div>
+
+            <div
+              *ngIf="!paraderosMapa || paraderosMapa.length === 0"
+              class="sin-datos-aviso">
+              <mat-icon>wrong_location</mat-icon>
+              <p>Esta ruta no cuenta con paraderos asignados en la base de datos.</p>
+            </div>
+
           </div>
 
-          <div class="capa-mapa-vacia" *ngIf="paraderosCercanos.length === 0 && !rutaSeleccionada">
+          <!-- Overlay: estado vacío inicial -->
+          <div
+            class="capa-mapa-vacia"
+            *ngIf="!rutaSeleccionada && !miLatitud && !cargandoGps && paraderosCercanos.length === 0">
             <mat-icon class="icono-gigante-mapa">map</mat-icon>
-            <h2>Visor Geográfico MoviRuta</h2>
-            <p>Selecciona una ruta de la lista o localiza los paraderos cercanos para proyectar de forma gráfica la red de transporte en este cuadrante.</p>
+            <h2>Visor Geográfico de MoviRuta</h2>
+            <p>Selecciona una ruta del catálogo o activa el GPS para proyectar
+               la red de transporte en el mapa.</p>
           </div>
 
         </div>
