@@ -1,152 +1,300 @@
 <div class="profile-container">
   <div class="profile-wrapper width-completo-layout">
-    
+
     <section class="profile-hero">
       <div class="hero-copy">
         <span class="hero-kicker">
-          <mat-icon>confirmation_number</mat-icon>
-          Módulo de Tránsito
+          <mat-icon>confirmation_number</mat-icon>Módulo de Tránsito
         </span>
         <h1>Control de Abordaje y Boletería</h1>
-        <p>Simula el ingreso de pasajeros al sistema de transporte, valida saldos de tarjetas inteligentes y gestiona el estado de los pasajes.</p>
+        <p>Gestiona el ciclo completo del viaje: abordaje, validación de saldo y descenso.</p>
       </div>
     </section>
 
     <div class="panel-dividido-rutas">
-      
+
+      <!-- ══════════════════════════════════════════
+           PANEL IZQUIERDO — Formulario de abordaje
+      ══════════════════════════════════════════ -->
       <div class="sub-panel-izquierdo">
         <mat-tab-group animationDuration="0ms">
-          
           <mat-tab label="Simular Abordaje">
             <div class="tab-contenido-interno">
-              
-              <mat-card class="tarjeta-saldo-express" style="margin-bottom: 16px; box-shadow: none; border: 1px solid #e2e8f0;">
-                <mat-card-content style="padding: 16px;">
-                  <span class="saldo-titulo" style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; display: block;">Saldo Prepago Disponible</span>
-                  <h1 class="saldo-monto" style="font-size: 30px; font-weight: 800; color: #0f172a; margin: 4px 0;">${{ metodosPago[0]?.saldo | number:'1.2-2' }}</h1>
-                  <span class="saldo-token" style="font-size: 11px; color: #94a3b8; font-family: monospace; display: block; word-break: break-all;">ID Cuenta: {{ metodosPago[0]?.identificador }}</span>
+
+              <!-- Saldo -->
+              <mat-card style="margin-bottom:16px;box-shadow:none;border:1px solid #e2e8f0;">
+                <mat-card-content style="padding:16px;">
+                  <span style="font-size:11px;text-transform:uppercase;color:#64748b;
+                               font-weight:700;display:block;">Saldo Prepago</span>
+                  <h1 style="font-size:30px;font-weight:800;color:#0f172a;margin:4px 0;">
+                    ${{ metodosPago[0]?.saldo | number:'1.2-2' }}
+                  </h1>
+                  <span style="font-size:11px;color:#94a3b8;font-family:monospace;">
+                    {{ metodosPago[0]?.identificador }}
+                  </span>
                 </mat-card-content>
               </mat-card>
 
-              <p class="texto-ayuda-gps">🎯 Configura los datos operativos de la unidad:</p>
+              <p class="texto-ayuda-gps">🎯 Selecciona la programación y tu paradero de origen:</p>
 
               <div class="scroll-lista-elementos">
-                
+
+                <!-- 1. Programación activa -->
                 <mat-form-field appearance="outline" class="buscador-full">
-                  <mat-label>Seleccionar Bus (Placa)</mat-label>
-                  <mat-select [(ngModel)]="busSeleccionadoId">
-                    <mat-option *ngFor="let bus of busesDisponibles" [value]="bus.id">
-                      🚌 Bus: {{ bus.placa }} <span *ngIf="bus.modelo">({{ bus.modelo }})</span>
+                  <mat-label>Programación activa (Ruta + Bus)</mat-label>
+                  <mat-select [(ngModel)]="programacionId"
+                              (selectionChange)="alSeleccionarProgramacion()">
+                    <mat-option *ngFor="let p of programaciones" [value]="p.id">
+                      🗺️ {{ p.ruta?.nombre }} — 🚌 {{ p.bus?.placa }}
+                      ({{ p.horaSalida }})
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
 
+                <!-- Detalle de la programación seleccionada -->
+                <ng-container *ngIf="programacionId">
+                  <ng-container *ngFor="let p of programaciones">
+                    <div *ngIf="p.id === programacionId"
+                         style="background:#f8fafc;border-radius:10px;
+                                padding:12px 16px;margin-bottom:12px;
+                                font-size:13px;color:#374151;line-height:1.8;">
+                      <strong>Conductor:</strong>
+                      {{ p.conductorAsignado?.persona?.nombres }}
+                      {{ p.conductorAsignado?.persona?.apellidos }}<br/>
+                      <strong>Bus:</strong> {{ p.bus?.placa }} — {{ p.bus?.modelo }}<br/>
+                      <strong>Tarifa:</strong> ${{ p.ruta?.tarifa | number:'1.2-2' }}<br/>
+                      <strong>Capacidad disponible:</strong>
+                      {{ p.bus?.capacidadMaxima }} asientos
+                    </div>
+                  </ng-container>
+                </ng-container>
+
+                <!-- 2. Paradero de Origen -->
                 <mat-form-field appearance="outline" class="buscador-full">
-                  <mat-label>Seleccionar Ruta</mat-label>
-                  <mat-select [(ngModel)]="rutaSeleccionadaId" (selectionChange)="alCambiarRuta()">
-                    <mat-option *ngFor="let ruta of rutasDisponibles" [value]="ruta.id">
-                      🗺️ {{ ruta.nombre }} — Tarifa: ${{ ruta.tarifa | number:'1.2-2' }}
+                  <mat-label>Paradero de Origen (donde se sube)</mat-label>
+                  <mat-select [(ngModel)]="rutaParaderoOrigenId"
+                              [disabled]="paraderosDeRuta.length === 0">
+                    <mat-option *ngFor="let p of paraderosDeRuta"
+                                [value]="p.rutaParaderoId">
+                      📍 #{{ p.orden }} — {{ p.nombre }}
+                      <span *ngIf="p.tipo">[{{ p.tipo }}]</span>
                     </mat-option>
                   </mat-select>
+                  <mat-hint *ngIf="programacionId && paraderosDeRuta.length === 0">
+                    Esta ruta no tiene paraderos asignados.
+                  </mat-hint>
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="buscador-full">
-                  <mat-label>Paradero de Entrada / Abordaje</mat-label>
-                  <mat-select [(ngModel)]="paraderoAbordajeId" [disabled]="paraderosDisponibles.length === 0">
-                    <mat-option *ngFor="let p of paraderosDisponibles" [value]="p.id">
-                      📍 {{ p.nombre }} <span *ngIf="p.tipo">[{{ p.tipo }}]</span>
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-
-                <button mat-flat-button color="primary" class="btn-gps-moviruta" (click)="registrarAbordaje()" style="width: 100%; padding: 24px 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <button
+                  mat-flat-button color="primary" class="btn-gps-moviruta"
+                  (click)="registrarAbordaje()"
+                  [disabled]="!programacionId || !rutaParaderoOrigenId"
+                  style="width:100%;padding:24px 16px;display:flex;
+                         align-items:center;justify-content:center;gap:8px;">
                   <mat-icon>sensors</mat-icon>
-                  Simular Abordaje en Servidor
+                  Registrar Abordaje
                 </button>
 
               </div>
             </div>
           </mat-tab>
-          
         </mat-tab-group>
       </div>
 
+      <!-- ══════════════════════════════════════════
+           PANEL DERECHO — Historial de boletos
+      ══════════════════════════════════════════ -->
       <div class="sub-panel-mapa">
-        <div class="contenedor-marco-mapa" style="display: flex; flex-direction: column;">
-          
-          <div class="tabla-header-flex" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
-            <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0;">Historial Activo de Pasajes</h2>
-            <span class="tag-badge verde" style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;">Total: {{ boletos.length }}</span>
+        <div class="contenedor-marco-mapa" style="display:flex;flex-direction:column;">
+
+          <div style="display:flex;justify-content:space-between;align-items:center;
+                      border-bottom:1px solid #f1f5f9;padding-bottom:12px;">
+            <h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0;">
+              Historial de Pasajes
+            </h2>
+            <span style="background:#dcfce7;color:#166534;padding:4px 10px;
+                         border-radius:12px;font-size:11px;font-weight:700;">
+              Total: {{ boletos.length }}
+            </span>
           </div>
 
-          <div class="scroll-lista-elementos" style="margin-top: 16px; overflow: auto; width: 100%;">
-            <table mat-table [dataSource]="boletos" class="corporative-table" style="width: 100%; background: transparent;">
-              
+          <div style="margin-top:16px;overflow:auto;width:100%;">
+            <table mat-table [dataSource]="boletos"
+                   style="width:100%;background:transparent;">
+
               <ng-container matColumnDef="id">
-                <th mat-header-cell *matHeaderCellDef style="font-weight: 700; color: #475569;"> ID </th>
-                <td mat-cell *matCellDef="let element"> <strong>#{{ element.id }}</strong> </td>
+                <th mat-header-cell *matHeaderCellDef style="font-weight:700;color:#475569;">ID</th>
+                <td mat-cell *matCellDef="let e"><strong>#{{ e.id }}</strong></td>
               </ng-container>
 
-              <ng-container matColumnDef="ciudadano">
-                <th mat-header-cell *matHeaderCellDef style="font-weight: 700; color: #475569;"> Pasajero </th>
-                <td mat-cell *matCellDef="let element"> 
-                  {{ element.ciudadano?.persona?.nombres || 'Usuario MoviRuta' }}
-                </td>
+              <ng-container matColumnDef="ruta">
+                <th mat-header-cell *matHeaderCellDef style="font-weight:700;color:#475569;">Ruta</th>
+                <td mat-cell *matCellDef="let e">{{ e.programacion?.ruta?.nombre || '—' }}</td>
               </ng-container>
 
               <ng-container matColumnDef="bus">
-                <th mat-header-cell *matHeaderCellDef style="font-weight: 700; color: #475569;"> Bus </th>
-                <td mat-cell *matCellDef="let element"> 
-                  <span class="tag-badge gris" style="background-color: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 600;">
-                    🚌 {{ element.bus?.placa || 'N/A' }}
+                <th mat-header-cell *matHeaderCellDef style="font-weight:700;color:#475569;">Bus</th>
+                <td mat-cell *matCellDef="let e">
+                  <span style="background:#f1f5f9;color:#475569;padding:4px 8px;
+                               border-radius:8px;font-size:11px;font-weight:600;">
+                    🚌 {{ e.programacion?.bus?.placa || '—' }}
                   </span>
                 </td>
               </ng-container>
 
-              <ng-container matColumnDef="ruta">
-                <th mat-header-cell *matHeaderCellDef style="font-weight: 700; color: #475569;"> Ruta </th>
-                <td mat-cell *matCellDef="let element"> {{ element.ruta?.nombre || 'Urbana' }} </td>
+              <ng-container matColumnDef="conductor">
+                <th mat-header-cell *matHeaderCellDef style="font-weight:700;color:#475569;">Conductor</th>
+                <td mat-cell *matCellDef="let e">
+                  {{ e.programacion?.conductorAsignado?.persona?.nombres || '—' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="origen">
+                <th mat-header-cell *matHeaderCellDef style="font-weight:700;color:#475569;">Origen</th>
+                <td mat-cell *matCellDef="let e">
+                  📍 {{ e.rutaParaderoOrigen?.paradero?.nombre || '—' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="destino">
+                <th mat-header-cell *matHeaderCellDef style="font-weight:700;color:#475569;">Destino</th>
+                <td mat-cell *matCellDef="let e">
+                  <span *ngIf="e.rutaParaderoDescenso">
+                    🏁 {{ e.rutaParaderoDescenso?.paradero?.nombre }}
+                  </span>
+                  <span *ngIf="!e.rutaParaderoDescenso"
+                        style="color:#94a3b8;font-size:12px;">En viaje...</span>
+                </td>
               </ng-container>
 
               <ng-container matColumnDef="estado">
-                <th mat-header-cell *matHeaderCellDef style="font-weight: 700; color: #475569;"> Estado </th>
-                <td mat-cell *matCellDef="let element">
-                  <span class="tag-badge" 
-                        [style.background-color]="element.estado === 'ACTIVO' ? '#dcfce7' : '#ffedd5'"
-                        [style.color]="element.estado === 'ACTIVO' ? '#166534' : '#9a3412'"
-                        style="padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;">
-                    {{ element.estado }}
+                <th mat-header-cell *matHeaderCellDef style="font-weight:700;color:#475569;">Estado</th>
+                <td mat-cell *matCellDef="let e">
+                  <span [style.background]="e.estado === 'ACTIVO' ? '#dcfce7' : '#ffedd5'"
+                        [style.color]="e.estado === 'ACTIVO' ? '#166534' : '#9a3412'"
+                        style="padding:4px 10px;border-radius:12px;
+                               font-size:11px;font-weight:700;">
+                    {{ e.estado }}
                   </span>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="costo">
-                <th mat-header-cell *matHeaderCellDef style="font-weight: 700; color: #475569;"> Costo </th>
-                <td mat-cell *matCellDef="let element"> ${{ element.costo | number:'1.2-2' }} </td>
+                <th mat-header-cell *matHeaderCellDef style="font-weight:700;color:#475569;">Costo</th>
+                <td mat-cell *matCellDef="let e">${{ e.costo | number:'1.2-2' }}</td>
               </ng-container>
 
               <ng-container matColumnDef="acciones">
-                <th mat-header-cell *matHeaderCellDef style="font-weight: 700; color: #475569;"> Operaciones </th>
-                <td mat-cell *matCellDef="let element">
-                  <button *ngIf="element.estado === 'ACTIVO'" mat-stroked-button color="warn" class="btn-descenso-tabla" (click)="registrarDescenso(element)" style="border-radius: 20px; font-weight: 600; font-size: 12px;">
-                    <mat-icon style="font-size: 16px; width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;">logout</mat-icon> Descenso
+                <th mat-header-cell *matHeaderCellDef style="font-weight:700;color:#475569;">Acciones</th>
+                <td mat-cell *matCellDef="let e">
+                  <button
+                    *ngIf="e.estado === 'ACTIVO' && !e.rutaParaderoDescenso"
+                    mat-stroked-button color="warn"
+                    (click)="abrirModalDescenso(e)"
+                    style="border-radius:20px;font-weight:600;font-size:12px;">
+                    <mat-icon style="font-size:16px;width:16px;height:16px;
+                                     margin-right:4px;vertical-align:middle;">
+                      logout
+                    </mat-icon>
+                    Descenso
                   </button>
+                  <span *ngIf="e.estado === 'COMPLETADO'"
+                        style="font-size:12px;color:#166534;font-weight:600;">
+                    ✅ Completado
+                  </span>
                 </td>
               </ng-container>
 
               <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="corporative-row"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
             </table>
 
-            <div *ngIf="boletos.length === 0" class="sin-datos-aviso" style="text-align: center; padding: 40px; color: #94a3b8;">
-              <mat-icon style="font-size: 48px; width: 48px; height: 48px; margin-bottom: 8px;">receipt_long</mat-icon>
-              <p style="margin: 0;">No se registran transacciones de boletaje guardadas en el sistema para este ciudadano.</p>
+            <div *ngIf="boletos.length === 0"
+                 style="text-align:center;padding:40px;color:#94a3b8;">
+              <mat-icon style="font-size:48px;width:48px;height:48px;margin-bottom:8px;">
+                receipt_long
+              </mat-icon>
+              <p style="margin:0;">Sin transacciones registradas.</p>
             </div>
           </div>
 
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
+<!-- ══════════════════════════════════════════════════
+     MODAL — Registrar Descenso
+══════════════════════════════════════════════════ -->
+<div *ngIf="mostrarModalDescenso"
+     style="position:fixed;inset:0;z-index:9999;display:flex;
+            align-items:center;justify-content:center;
+            background:rgba(15,23,42,0.55);backdrop-filter:blur(4px);">
+
+  <div style="background:#fff;border-radius:20px;padding:32px;width:100%;
+              max-width:460px;box-shadow:0 24px 60px rgba(0,0,0,0.2);
+              display:flex;flex-direction:column;gap:20px;">
+
+    <!-- Cabecera -->
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="background:#fee2e2;border-radius:50%;width:44px;height:44px;
+                  display:flex;align-items:center;justify-content:center;">
+        <mat-icon style="color:#dc2626;">logout</mat-icon>
+      </div>
+      <div>
+        <h3 style="margin:0;font-size:17px;font-weight:800;color:#0f172a;">
+          Registrar Descenso
+        </h3>
+        <p style="margin:0;font-size:12px;color:#64748b;">
+          Boleto #{{ boletoEnDescenso?.id }} —
+          {{ boletoEnDescenso?.programacion?.ruta?.nombre }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Info del viaje -->
+    <div style="background:#f8fafc;border-radius:10px;padding:14px 16px;
+                font-size:13px;color:#374151;line-height:1.9;">
+      <strong>🚌 Bus:</strong>
+      {{ boletoEnDescenso?.programacion?.bus?.placa }}<br/>
+      <strong>👤 Conductor:</strong>
+      {{ boletoEnDescenso?.programacion?.conductorAsignado?.persona?.nombres }}
+      {{ boletoEnDescenso?.programacion?.conductorAsignado?.persona?.apellidos }}<br/>
+      <strong>📍 Abordaje:</strong>
+      {{ boletoEnDescenso?.rutaParaderoOrigen?.paradero?.nombre }}<br/>
+      <strong>⏱ Hora salida programada:</strong>
+      {{ boletoEnDescenso?.programacion?.horaSalida }}
+    </div>
+
+    <!-- Selector de paradero de descenso -->
+    <mat-form-field appearance="outline" style="width:100%;">
+      <mat-label>¿En qué paradero se baja?</mat-label>
+      <mat-select [(ngModel)]="rutaParaderoDescensoId">
+        <mat-option *ngFor="let p of paraderosDescensoModal"
+                    [value]="p.rutaParaderoId">
+          🏁 #{{ p.orden }} — {{ p.nombre }}
+          <span *ngIf="p.tipo" style="color:#94a3b8;">[{{ p.tipo }}]</span>
+        </mat-option>
+      </mat-select>
+      <mat-hint *ngIf="paraderosDescensoModal.length === 0">
+        No hay paraderos posteriores disponibles en esta ruta.
+      </mat-hint>
+    </mat-form-field>
+
+    <!-- Acciones -->
+    <div style="display:flex;gap:12px;justify-content:flex-end;">
+      <button mat-stroked-button (click)="cerrarModalDescenso()"
+              style="border-radius:12px;font-weight:600;">
+        Cancelar
+      </button>
+      <button mat-flat-button color="warn"
+              (click)="confirmarDescenso()"
+              [disabled]="!rutaParaderoDescensoId"
+              style="border-radius:12px;font-weight:600;">
+        <mat-icon>check_circle</mat-icon>
+        Confirmar Descenso
+      </button>
     </div>
   </div>
 </div>

@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 
-// Importaciones requeridas de Angular Material
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -17,198 +16,216 @@ import { MatTabsModule } from '@angular/material/tabs';
   selector: 'app-boletos',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatOptionModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTableModule,
-    MatTabsModule
+    CommonModule, FormsModule,
+    MatCardModule, MatFormFieldModule, MatSelectModule, MatOptionModule,
+    MatButtonModule, MatIconModule, MatTableModule, MatTabsModule,
   ],
   templateUrl: './boletos.component.html',
-  styleUrls: ['./boletos.component.scss']
+  styleUrls: ['./boletos.component.scss'],
 })
 export class BoletosComponent implements OnInit {
-  // Historial operativo de la tabla
+
+  // ── Tabla ─────────────────────────────────────────────────────────────────
   public boletos: any[] = [];
-  public displayedColumns: string[] = ['id', 'ciudadano', 'bus', 'ruta', 'estado', 'costo', 'acciones'];
-
-  // Listas dinámicas de catálogos
-  public rutasDisponibles: any[] = [];
-  public paraderosDisponibles: any[] = [];
-  public busesDisponibles: any[] = [];
-  
-  // Cuenta local sincronizada con el Backend
-  public metodosPago: any[] = [
-    { identificador: '1234-5678-9012-3456', saldo: 0.00 } // Inicializado en 0 hasta que cargue de DB
+  public displayedColumns = [
+    'id', 'ruta', 'bus', 'conductor', 'origen', 'destino', 'estado', 'costo', 'acciones',
   ];
-  public metodoPagoId: number | null = null; // ID único del registro en la base de datos
 
-  // Modelos vinculados a los selectores [(ngModel)]
-  public busSeleccionadoId: number | null = null;
-  public rutaSeleccionadaId: number | null = null;
-  public paraderoAbordajeId: number | null = null;
+  // ── Catálogos ─────────────────────────────────────────────────────────────
+  public programaciones: any[]       = [];
+  /** RutaParaderos de la programación elegida, ordenados por `orden` */
+  public paraderosDeRuta: any[]      = [];
+  /** Solo paraderos con orden MAYOR al origen elegido */
+  public paraderosDestino: any[]     = [];
 
-  // ID del ciudadano en sesión para pruebas (Filtro Personal)
-  public usuarioSesionId: number = 5; 
+  // ── Método de pago ────────────────────────────────────────────────────────
+  public metodosPago: any[]          = [{ identificador: '—', saldo: 0 }];
+  public metodoPagoId: number | null = null;
 
-  // URL base de tu API Backend
-  private API_URL = 'http://localhost:3000'; 
+  // ── Modelos del formulario de abordaje ────────────────────────────────────
+  public programacionId: number | null      = null;
+  public rutaParaderoOrigenId: number | null = null;
+
+  // ── Estado del modal de descenso ──────────────────────────────────────────
+  public mostrarModalDescenso              = false;
+  public boletoEnDescenso: any | null      = null;
+  public paraderosDescensoModal: any[]     = [];
+  public rutaParaderoDescensoId: number | null = null;
+
+  // ── Sesión ────────────────────────────────────────────────────────────────
+  public usuarioSesionId = 5;
+
+  private API = 'http://localhost:3000';
 
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.consultarServiciosBackend();
-    this.cargarRutasBackend();
-    this.cargarParaderosBackend();
-    this.cargarBusesBackend();
-    this.obtenerSaldoRealBackend(); // Carga el saldo persistido del ciudadano
+    this.cargarBoletos();
+    this.cargarProgramaciones();
+    this.cargarSaldo();
   }
 
-  // 1. Obtiene el saldo real persistido desde la base de datos
-  public obtenerSaldoRealBackend(): void {
-    this.http.get<any[]>(`${this.API_URL}/metodo-pago-ciudadano?ciudadanoId=${this.usuarioSesionId}`).subscribe({
-      next: (data) => {
-        if (data && data.length > 0) {
-          const tarjetaActiva = data[0];
-          this.metodoPagoId = tarjetaActiva.id; // Almacenamos el ID de la tabla para el PATCH posterior
-          this.metodosPago = [{
-            identificador: tarjetaActiva.identificador,
-            saldo: parseFloat(tarjetaActiva.saldo)
-          }];
-          console.log('Saldo real sincronizado:', this.metodosPago[0].saldo);
-        }
-      },
-      error: (err) => console.error('Error al consultar saldo real de la tarjeta:', err)
-    });
+  // ── Carga inicial ─────────────────────────────────────────────────────────
+
+  cargarBoletos(): void {
+    this.http
+      .get<any[]>(`${this.API}/boleto?ciudadanoId=${this.usuarioSesionId}`)
+      .subscribe({
+        next:  (d) => (this.boletos = d),
+        error: (e) => console.error('Error boletos:', e),
+      });
   }
 
-  // 2. Filtra para ver ÚNICAMENTE tus propios boletos en la tabla
-  public consultarServiciosBackend(): void {
-    this.http.get<any[]>(`${this.API_URL}/boleto?ciudadanoId=${this.usuarioSesionId}`).subscribe({
-      next: (data) => {
-        this.boletos = data;
-        console.log('Mis boletos filtrados cargados:', this.boletos);
-      },
-      error: (err) => console.error('Error al consultar tiquetes:', err)
-    });
+  cargarProgramaciones(): void {
+    // Solo programaciones ACTIVAS
+    this.http
+      .get<any[]>(`${this.API}/programacion?estado=ACTIVO`)
+      .subscribe({
+        next:  (d) => (this.programaciones = d),
+        error: (e) => console.error('Error programaciones:', e),
+      });
   }
 
-  // 3. Trae catálogo de buses desde el backend
-  public cargarBusesBackend(): void {
-    this.http.get<any[]>(`${this.API_URL}/bus`).subscribe({
-      next: (data) => this.busesDisponibles = data,
-      error: (err) => console.error('Error al cargar catálogo de buses:', err)
-    });
+  cargarSaldo(): void {
+    this.http
+      .get<any[]>(`${this.API}/metodo-pago-ciudadano?ciudadanoId=${this.usuarioSesionId}`)
+      .subscribe({
+        next: (d) => {
+          if (d?.length > 0) {
+            this.metodoPagoId = d[0].id;
+            this.metodosPago  = [{ identificador: d[0].identificador, saldo: parseFloat(d[0].saldo) }];
+          }
+        },
+        error: (e) => console.error('Error saldo:', e),
+      });
   }
 
-  // 4. Trae catálogo de rutas
-  public cargarRutasBackend(): void {
-    this.http.get<any[]>(`${this.API_URL}/ruta`).subscribe({
-      next: (data) => this.rutasDisponibles = data,
-      error: (err) => console.error('Error al cargar catálogo de rutas:', err)
-    });
+  // ── Selección de programación → carga paraderos ───────────────────────────
+
+  alSeleccionarProgramacion(): void {
+    this.rutaParaderoOrigenId = null;
+    this.paraderosDeRuta      = [];
+    this.paraderosDestino     = [];
+
+    const prog = this.programaciones.find((p) => p.id === this.programacionId);
+    if (!prog?.ruta?.paraderosEnRuta?.length) return;
+
+    this.paraderosDeRuta = [...prog.ruta.paraderosEnRuta]
+      .sort((a: any, b: any) => a.orden - b.orden)
+      .map((item: any) => ({
+        rutaParaderoId: item.id,        // id de RutaParadero — lo enviamos al backend
+        paraderoId:     item.paradero.id,
+        nombre:         item.paradero.nombre,
+        tipo:           item.paradero.tipo,
+        orden:          item.orden,
+      }));
   }
 
-  // 5. Trae catálogo general de paraderos
-  public cargarParaderosBackend(): void {
-    this.http.get<any[]>(`${this.API_URL}/paradero`).subscribe({
-      next: (data) => this.paraderosDisponibles = data,
-      error: (err) => console.error('Error al cargar catálogo de paraderos:', err)
-    });
-  }
+  // ── HU-ENTR-2-003: Registrar Abordaje ────────────────────────────────────
 
-  // Filtra paraderos asignados a la ruta seleccionada
-  public alCambiarRuta(): void {
-    const rutaElegida = this.rutasDisponibles.find(r => r.id === this.rutaSeleccionadaId);
-    if (rutaElegida && rutaElegida.paraderosEnRuta?.length > 0) {
-      this.paraderosDisponibles = rutaElegida.paraderosEnRuta.map((item: any) => item.paradero);
-    } else {
-      this.cargarParaderosBackend();
-    }
-    this.paraderoAbordajeId = null;
-  }
-
-  // Crea un nuevo boleto y descuenta/persiste el saldo real en el servidor
-  public registrarAbordaje(): void {
-    if (!this.busSeleccionadoId || !this.rutaSeleccionadaId || !this.paraderoAbordajeId) {
-      alert('Por favor, selecciona un bus, una ruta y un paradero para simular el abordaje.');
+  registrarAbordaje(): void {
+    if (!this.programacionId || !this.rutaParaderoOrigenId || !this.metodoPagoId) {
+      alert('Selecciona una programación, un paradero de origen y verifica tu método de pago.');
       return;
     }
 
-    const ruta = this.rutasDisponibles.find(r => r.id === this.rutaSeleccionadaId);
-    const costoFinal = ruta ? parseFloat(ruta.tarifa) : 2500.00;
-
-    // Validación de fondos en el lado del cliente
-    if (this.metodosPago[0].saldo < costoFinal) {
-      alert('Transacción rechazada: Saldo insuficiente en la tarjeta inteligente.');
-      return;
-    }
-
-    const nuevoBoletoDto = {
-      ciudadanoId: Number(this.usuarioSesionId),
-      busId: Number(this.busSeleccionadoId),
-      rutaId: Number(this.rutaSeleccionadaId),
-      paraderoAbordajeId: Number(this.paraderoAbordajeId),
-      costo: costoFinal
+    const payload = {
+      ciudadanoId:          this.usuarioSesionId,
+      programacionId:       this.programacionId,
+      rutaParaderoOrigenId: this.rutaParaderoOrigenId,
+      metodoPagoId:         this.metodoPagoId,
     };
 
-    // Primero guardamos el boleto de abordaje
-    this.http.post(`${this.API_URL}/boleto`, nuevoBoletoDto).subscribe({
+    this.http.post(`${this.API}/boleto`, payload).subscribe({
       next: () => {
-        this.consultarServiciosBackend(); // Refresca el historial de viajes de la tabla
-        
-        // Calculamos el remanente de saldo
-        const nuevoSaldoCalculado = this.metodosPago[0].saldo - costoFinal;
+        this.cargarBoletos();
+        this.cargarSaldo();
+        this.programacionId       = null;
+        this.rutaParaderoOrigenId = null;
+        this.paraderosDeRuta      = [];
+      },
+      error: (e) => {
+        console.error('Error al registrar abordaje:', e);
+        alert(e?.error?.message ?? 'Error al registrar el abordaje.');
+      },
+    });
+  }
 
-        // Construcción del DTO de actualización para el método de pago
-        const updateSaldoDto = {
-          ciudadanoId: Number(this.usuarioSesionId),
-          metodoPagoId: 1, // Tipo de método predeterminado (Tarjeta)
-          identificador: this.metodosPago[0].identificador,
-          saldo: nuevoSaldoCalculado
-        };
+  // ── HU-ENTR-2-004: Modal de Descenso ─────────────────────────────────────
 
-        // Realizamos el PATCH al id del método de pago recuperado para guardarlo en DB
-        const idTransaccion = this.metodoPagoId || this.usuarioSesionId;
-        this.http.patch(`${this.API_URL}/metodo-pago-ciudadano/${idTransaccion}`, updateSaldoDto).subscribe({
-          next: () => {
-            // Sincronizamos la UI local sólo tras la confirmación exitosa del servidor
-            this.metodosPago[0].saldo = nuevoSaldoCalculado;
-            console.log('Saldo debitado y guardado en la base de datos de manera definitiva.');
+  abrirModalDescenso(boleto: any): void {
+    this.boletoEnDescenso        = boleto;
+    this.rutaParaderoDescensoId  = null;
+    this.paraderosDescensoModal  = [];
+
+    // Obtenemos los paraderosEnRuta de la programación del boleto
+    const prog = this.programaciones.find(
+      (p) => p.id === boleto.programacion?.id,
+    );
+
+    const paraderosEnRuta: any[] = prog?.ruta?.paraderosEnRuta ?? [];
+    const ordenOrigen            = boleto.rutaParaderoOrigen?.orden ?? -1;
+
+    this.paraderosDescensoModal = paraderosEnRuta
+      .filter((item: any) => item.orden > ordenOrigen)
+      .sort((a: any, b: any) => a.orden - b.orden)
+      .map((item: any) => ({
+        rutaParaderoId: item.id,
+        nombre:         item.paradero.nombre,
+        tipo:           item.paradero.tipo,
+        orden:          item.orden,
+      }));
+
+    // Si la programación no estaba en caché, la pedimos al backend
+    if (!prog) {
+      this.http
+        .get<any>(`${this.API}/programacion/${boleto.programacion?.id}`)
+        .subscribe({
+          next: (p) => {
+            const items      = p?.ruta?.paraderosEnRuta ?? [];
+            const ordenOrig  = boleto.rutaParaderoOrigen?.orden ?? -1;
+            this.paraderosDescensoModal = items
+              .filter((i: any) => i.orden > ordenOrig)
+              .sort((a: any, b: any) => a.orden - b.orden)
+              .map((i: any) => ({
+                rutaParaderoId: i.id,
+                nombre:         i.paradero.nombre,
+                tipo:           i.paradero.tipo,
+                orden:          i.orden,
+              }));
+            this.mostrarModalDescenso = true;
           },
-          error: (err) => console.error('Error al persistir el nuevo saldo en el servidor:', err)
+          error: (e) => console.error('Error al cargar programación:', e),
         });
+      return;
+    }
 
-        // Limpieza de campos del formulario
-        this.busSeleccionadoId = null;
-        this.rutaSeleccionadaId = null;
-        this.paraderoAbordajeId = null;
-      },
-      error: (err) => console.error('Error al crear el boleto de abordaje:', err)
-    });
+    this.mostrarModalDescenso = true;
   }
 
-  // Ejecuta un PATCH directo al ID con el Body DTO exacto de Postman para el descenso
-  public registrarDescenso(boleto: any): void {
-    const updateBoletoDto = {
-      paraderoDescensoId: 3, 
-      estado: 'COMPLETADO',
-      fechaFin: new Date().toISOString()
-    };
+  cerrarModalDescenso(): void {
+    this.mostrarModalDescenso   = false;
+    this.boletoEnDescenso       = null;
+    this.rutaParaderoDescensoId = null;
+    this.paraderosDescensoModal = [];
+  }
 
-    this.http.patch(`${this.API_URL}/boleto/${boleto.id}`, updateBoletoDto).subscribe({
-      next: () => {
-        this.consultarServiciosBackend(); // Refresca tu lista personal de la tabla
-        alert(`Boleto #${boleto.id} finalizado exitosamente.`);
-      },
-      error: (err) => {
-        console.error('Error al registrar el descenso:', err);
-        alert('Ocurrió un error al intentar actualizar el boleto.');
-      }
-    });
+  confirmarDescenso(): void {
+    if (!this.rutaParaderoDescensoId || !this.boletoEnDescenso) return;
+
+    this.http
+      .patch(`${this.API}/boleto/${this.boletoEnDescenso.id}`, {
+        rutaParaderoDescensoId: this.rutaParaderoDescensoId,
+      })
+      .subscribe({
+        next: () => {
+          this.cargarBoletos();
+          this.cerrarModalDescenso();
+        },
+        error: (e) => {
+          console.error('Error al registrar descenso:', e);
+          alert(e?.error?.message ?? 'Error al registrar el descenso.');
+        },
+      });
   }
 }
