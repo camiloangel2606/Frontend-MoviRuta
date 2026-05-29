@@ -70,6 +70,20 @@ mat-nav-list {
   gap: 10px;
 }
 
+.nav-group-label {
+  padding: 4px 12px 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.nav-divider {
+  border-top-color: rgba(255, 255, 255, 0.1) !important;
+  margin: 4px 0 !important;
+}
+
 a[mat-list-item] {
   position: relative;
   min-height: 58px;

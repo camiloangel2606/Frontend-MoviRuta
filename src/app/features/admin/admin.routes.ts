@@ -1,12 +1,64 @@
 import { Routes } from '@angular/router';
 import { roleGuard } from '../../core/guards/role.guard';
 
+const ADMIN_EMPRESA_ROLES = ['Administrador Empresa', 'Administrador Sistema', 'ADMIN'];
+const ADMIN_SISTEMA_ROLES = ['Administrador Sistema', 'ADMIN'];
+
 export const ADMIN_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () => import('./admin-dashboard/admin-dashboard.component')
       .then(m => m.AdminDashboardComponent),
-    data: { roles: ['Administrador Sistema', 'ADMIN'] }
+    data: { roles: ADMIN_SISTEMA_ROLES }
+  },
+  {
+    path: 'buses',
+    loadComponent: () => import('../../shared/components/proximamente/proximamente.component')
+      .then(m => m.ProximamenteComponent),
+    canActivate: [roleGuard],
+    data: { titulo: 'Flota de Buses', roles: ADMIN_EMPRESA_ROLES }
+  },
+  {
+    path: 'paraderos',
+    loadComponent: () => import('../../shared/components/proximamente/proximamente.component')
+      .then(m => m.ProximamenteComponent),
+    canActivate: [roleGuard],
+    data: { titulo: 'Paraderos', roles: ADMIN_EMPRESA_ROLES }
+  },
+  {
+    path: 'rutas',
+    loadComponent: () => import('../../shared/components/proximamente/proximamente.component')
+      .then(m => m.ProximamenteComponent),
+    canActivate: [roleGuard],
+    data: { titulo: 'Rutas', roles: ADMIN_EMPRESA_ROLES }
+  },
+  {
+    path: 'programaciones',
+    loadComponent: () => import('../../shared/components/proximamente/proximamente.component')
+      .then(m => m.ProximamenteComponent),
+    canActivate: [roleGuard],
+    data: { titulo: 'Programaciones', roles: ADMIN_EMPRESA_ROLES }
+  },
+  {
+    path: 'reportes/ingresos',
+    loadComponent: () => import('../../shared/components/proximamente/proximamente.component')
+      .then(m => m.ProximamenteComponent),
+    canActivate: [roleGuard],
+    data: { titulo: 'Reporte de Ingresos', roles: ADMIN_EMPRESA_ROLES }
+  },
+  {
+    path: 'reportes/demografia',
+    loadComponent: () => import('../../shared/components/proximamente/proximamente.component')
+      .then(m => m.ProximamenteComponent),
+    canActivate: [roleGuard],
+    data: { titulo: 'Reporte Demográfico', roles: ADMIN_EMPRESA_ROLES }
+  },
+  {
+    path: 'reportes/incidentes',
+    loadComponent: () => import('../../shared/components/proximamente/proximamente.component')
+      .then(m => m.ProximamenteComponent),
+    canActivate: [roleGuard],
+    data: { titulo: 'Reporte de Incidentes', roles: ADMIN_EMPRESA_ROLES }
   },
   {
     path: 'roles',

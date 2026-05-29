@@ -46,10 +46,39 @@
       canActivate: [authGuard]
     },
     {
+      path: 'ciudadano',
+      canActivate: [authGuard, roleGuard],
+      data: { roles: ['Ciudadano'] },
+      children: [
+        {
+          path: 'tarjeta/recargar',
+          loadComponent: () => import('./shared/components/proximamente/proximamente.component').then(m => m.ProximamenteComponent),
+          data: { titulo: 'Recargar Tarjeta', roles: ['Ciudadano'] }
+        }
+      ]
+    },
+    {
+      path: 'conductor',
+      canActivate: [authGuard, roleGuard],
+      data: { roles: ['Conductor', 'Administrador Sistema', 'Administrador Empresa', 'ADMIN'] },
+      children: [
+        {
+          path: 'dashboard',
+          loadComponent: () => import('./features/conductor/dashboard/dashboard-conductor.component').then(m => m.DashboardConductorComponent),
+          data: { roles: ['Conductor', 'Administrador Sistema', 'Administrador Empresa', 'ADMIN'] }
+        },
+        {
+          path: 'incidente/nuevo',
+          loadComponent: () => import('./shared/components/proximamente/proximamente.component').then(m => m.ProximamenteComponent),
+          data: { titulo: 'Reportar Incidente', roles: ['Conductor'] }
+        }
+      ]
+    },
+    {
       path: 'admin',
       loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES),
       canActivate: [authGuard, roleGuard],
-      data: { roles: ['Administrador Sistema', 'ADMIN'] }
+      data: { roles: ['Administrador Sistema', 'Administrador Empresa', 'ADMIN'] }
     },
     {
       path: 'test',

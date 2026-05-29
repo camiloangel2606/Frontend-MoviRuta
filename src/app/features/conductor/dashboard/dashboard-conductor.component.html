@@ -1,0 +1,194 @@
+<div class="conductor-page">
+
+  <!-- ── Page header ── -->
+  <header class="page-header">
+    <div class="header-icon-wrap">
+      <mat-icon>schedule</mat-icon>
+    </div>
+    <div class="header-copy">
+      <h1>Mi Turno</h1>
+      <p class="fecha-hoy">{{ formatFechaHoy() }}</p>
+    </div>
+  </header>
+
+  <!-- ── Loading skeleton ── -->
+  <ng-container *ngIf="isLoading">
+    <div class="skeleton-grid">
+      <app-skeleton type="stat" [delay]="0"></app-skeleton>
+      <app-skeleton type="stat" [delay]="0.1"></app-skeleton>
+      <app-skeleton type="stat" [delay]="0.2"></app-skeleton>
+    </div>
+    <app-skeleton type="card" height="120px" [delay]="0.3"></app-skeleton>
+  </ng-container>
+
+  <!-- ── Error state ── -->
+  <div class="error-banner" *ngIf="!isLoading && error">
+    <mat-icon>error_outline</mat-icon>
+    <div>
+      <strong>No se pudo cargar el turno</strong>
+      <p>{{ error }}</p>
+    </div>
+    <button mat-stroked-button (click)="cargarTurnoHoy()">
+      <mat-icon>refresh</mat-icon>
+      Reintentar
+    </button>
+  </div>
+
+  <!-- ── Sin turno ── -->
+  <ng-container *ngIf="!isLoading && !error && !turno">
+    <app-empty-state
+      icon="event_busy"
+      title="Sin turnos programados"
+      subtitle="No tienes turnos activos ni próximos asignados. Contacta a tu supervisor si crees que es un error."
+    ></app-empty-state>
+  </ng-container>
+
+  <!-- ── Turno encontrado ── -->
+  <ng-container *ngIf="!isLoading && !error && turno">
+
+    <!-- Estado banner -->
+    <div class="estado-banner" [ngClass]="estadoClass">
+      <mat-icon>{{ estadoIcono }}</mat-icon>
+      <span>{{ estadoLabel }}</span>
+      <span class="estado-sep" *ngIf="turno.estado === 'EN_CURSO'">·</span>
+      <span *ngIf="turno.estado === 'EN_CURSO'" class="estado-time">
+        en progreso desde {{ formatHora(turno.inicio) }}
+      </span>
+    </div>
+
+    <!-- Info grid: Bus / Ruta / Horario -->
+    <div class="info-grid">
+
+      <mat-card class="info-card">
+        <mat-card-content>
+          <div class="info-icon-wrap bus">
+            <mat-icon>directions_bus</mat-icon>
+          </div>
+          <div class="info-data">
+            <span class="info-label">Bus asignado</span>
+            <span class="info-value">{{ turno.bus.placa }}</span>
+            <span class="info-sub">{{ turno.bus.modelo }} · {{ turno.bus.anio }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="info-card">
+        <mat-card-content>
+          <div class="info-icon-wrap ruta">
+            <mat-icon>route</mat-icon>
+          </div>
+          <div class="info-data">
+            <span class="info-label">Ruta</span>
+            <span class="info-value">{{ programacion?.ruta?.nombre || '—' }}</span>
+            <span class="info-sub" *ngIf="programacion?.ruta?.tarifa">
+              Tarifa: ${{ programacion!.ruta.tarifa | number:'1.0-0' }}
+            </span>
+            <span class="info-sub" *ngIf="!programacion?.ruta">Sin programación asociada</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="info-card">
+        <mat-card-content>
+          <div class="info-icon-wrap hora">
+            <mat-icon>access_time</mat-icon>
+          </div>
+          <div class="info-data">
+            <span class="info-label">Hora de salida programada</span>
+            <span class="info-value">
+              {{ programacion?.horaSalida
+                  ? formatHoraSalida(programacion!.horaSalida)
+                  : formatHora(turno.inicio) }}
+            </span>
+            <span class="info-sub" *ngIf="programacion?.horaSalida && turno.inicio">
+              Registro turno: {{ formatHora(turno.inicio) }}
+            </span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+
+    <!-- Observaciones del turno (si existen) -->
+    <mat-card class="obs-card" *ngIf="turno.observaciones">
+      <mat-card-content>
+        <div class="obs-header">
+          <mat-icon>sticky_note_2</mat-icon>
+          <span>Observaciones registradas</span>
+        </div>
+        <p class="obs-text">{{ turno.observaciones }}</p>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Acción: Iniciar turno -->
+    <div class="action-section" *ngIf="puedeIniciar">
+      <p class="action-hint">Tu turno está listo para comenzar. Confirma las condiciones del vehículo antes de salir.</p>
+      <button mat-flat-button class="btn-iniciar" (click)="abrirDialogoIniciar()">
+        <mat-icon>play_arrow</mat-icon>
+        Iniciar Turno
+      </button>
+    </div>
+
+    <!-- ── GPS (solo cuando EN_CURSO) ── -->
+    <mat-card class="gps-card" *ngIf="turno.estado?.toUpperCase() === 'EN_CURSO'">
+      <mat-card-content>
+        <div class="gps-header">
+          <div class="gps-title-wrap">
+            <div class="gps-icon-wrap" [class.gps-activo]="gpsActivo">
+              <mat-icon>{{ gpsActivo ? 'gps_fixed' : 'gps_off' }}</mat-icon>
+            </div>
+            <div>
+              <span class="gps-title">Rastreo GPS</span>
+              <span class="gps-status">
+                {{ gpsActivo ? 'Activo — enviando posición' : 'Inactivo' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="gps-actions">
+            <button
+              *ngIf="!gpsActivo"
+              mat-flat-button
+              class="btn-gps-on"
+              (click)="activarGps()"
+              [disabled]="gpsCargando"
+            >
+              <mat-icon>{{ gpsCargando ? 'hourglass_empty' : 'my_location' }}</mat-icon>
+              {{ gpsCargando ? 'Activando...' : 'Activar GPS' }}
+            </button>
+
+            <button
+              *ngIf="gpsActivo"
+              mat-stroked-button
+              class="btn-gps-off"
+              (click)="detenerGps()"
+            >
+              <mat-icon>gps_off</mat-icon>
+              Detener
+            </button>
+          </div>
+        </div>
+
+        <!-- Coordenadas actuales -->
+        <div class="gps-coords" *ngIf="posicionActual">
+          <span class="coord-item">
+            <mat-icon>south</mat-icon>
+            Lat: {{ posicionActual.lat | number:'1.5-6' }}
+          </span>
+          <span class="coord-item">
+            <mat-icon>east</mat-icon>
+            Lng: {{ posicionActual.lng | number:'1.5-6' }}
+          </span>
+        </div>
+
+        <!-- Error GPS -->
+        <p class="gps-error" *ngIf="gpsError">
+          <mat-icon>warning</mat-icon>
+          {{ gpsError }}
+        </p>
+      </mat-card-content>
+    </mat-card>
+
+  </ng-container>
+
+</div>

@@ -117,6 +117,82 @@ Las llamadas a NestJS se hacen con `HttpClient` directamente desde `ProfileServi
 
 ---
 
+## Sidebar — Navegación lateral (AppComponent)
+
+El sidenav vive en `src/app/app.component.ts` / `.html`. **No** es un componente separado — está inline en el shell raíz junto al `<mat-sidenav>` de Angular Material.
+
+### Estructura navGroups
+```typescript
+// app.component.ts
+interface NavGroup {
+  label: string;     // '' = sin encabezado de grupo
+  roles: string[];   // [] = visible para cualquier usuario autenticado
+  items: NavItemDef[];
+}
+```
+
+El método `hasAnyRole(roles: string[]): boolean` controla visibilidad. Si `roles` es vacío → siempre visible. La suscripción a `authService.userRoles$` se hace en el constructor y actualiza `userRoles: string[]` reactivamente.
+
+### Grupos configurados (estado actual)
+
+| Grupo | Roles requeridos | Items |
+|---|---|---|
+| *(General — sin label)* | Ninguno (todos los autenticados) | Dashboard, Perfil, Planificar Rutas, **Mis Viajes** |
+| Ciudadano | `['Ciudadano']` | Recargar Tarjeta |
+| Conductor | `['Conductor', 'Administrador Sistema', 'Administrador Empresa', 'ADMIN']` | Mi Turno, Reportar Incidente |
+| Administración | `['Administrador Empresa', 'Administrador Sistema']` | Flota de Buses, Paraderos, Rutas, Programaciones |
+| Reportes | `['Administrador Empresa', 'Administrador Sistema']` | Ingresos, Demografía, Incidentes |
+| Sistema | `['Administrador Sistema', 'ADMIN']` | Usuarios, Roles, Permisos, Sesiones |
+
+> **Nota importante:** "Mis Viajes" (`/movilidad/boletos`) está en el grupo general (sin rol) porque la ruta solo usa `authGuard`. Si se pusiera en el grupo Ciudadano, conductores y admins no verían el ítem aunque la ruta sea accesible para todos.
+
+> **Admin + Conductor:** el grupo Conductor incluye roles de admin para permitir testing y supervisión. El `roleGuard` en `/conductor/**` acepta los mismos roles.
+
+### Cómo agregar un ítem nuevo al sidebar
+1. Elegir el grupo correcto en `navGroups` dentro de `app.component.ts`.
+2. Agregar `{ label, icon, route }` al array `items`.
+3. Asegurarse de que la ruta exista en `app.routes.ts` o `admin.routes.ts` con los guards correspondientes.
+
+---
+
+## Routing — grupos de rutas configurados
+
+### `app.routes.ts` — grupos relevantes
+```typescript
+// Ciudadano (authGuard + roleGuard)
+{ path: 'ciudadano', data: { roles: ['Ciudadano'] }, children: [
+  { path: 'tarjeta/recargar' }   // ProximamenteComponent
+]}
+
+// Conductor (authGuard + roleGuard — también acepta admins)
+{ path: 'conductor', data: { roles: ['Conductor', 'Administrador Sistema', 'Administrador Empresa', 'ADMIN'] }, children: [
+  { path: 'dashboard' }          // DashboardConductorComponent ← implementado
+  { path: 'incidente/nuevo' }    // ProximamenteComponent
+]}
+
+// Movilidad (authGuard heredado — sin roleGuard)
+{ path: 'movilidad', children: [
+  { path: 'boletos' }            // BoletosComponent
+  { path: 'boletos/:id' }        // DetalleViajeComponent
+]}
+
+// Admin (authGuard + roleGuard — acepta Administrador Empresa también)
+{ path: 'admin', data: { roles: ['Administrador Sistema', 'Administrador Empresa', 'ADMIN'] } }
+```
+
+### `admin.routes.ts` — nuevas rutas stub (usan `ProximamenteComponent`)
+| Ruta | Roles | Título mostrado |
+|---|---|---|
+| `/admin/buses` | Empresa + Sistema | Flota de Buses |
+| `/admin/paraderos` | Empresa + Sistema | Paraderos |
+| `/admin/rutas` | Empresa + Sistema | Rutas |
+| `/admin/programaciones` | Empresa + Sistema | Programaciones |
+| `/admin/reportes/ingresos` | Empresa + Sistema | Reporte de Ingresos |
+| `/admin/reportes/demografia` | Empresa + Sistema | Reporte Demográfico |
+| `/admin/reportes/incidentes` | Empresa + Sistema | Reporte de Incidentes |
+
+---
+
 ## Páginas ya construidas (ruta, qué hace)
 
 ### Públicas / Auth
@@ -135,8 +211,15 @@ Las llamadas a NestJS se hacen con `HttpClient` directamente desde `ProfileServi
 | `/dashboard` | `DashboardComponent` | Pantalla principal: stats, accesos rápidos, info del usuario |
 | `/profile` | `ProfileComponent` | Ver perfil, editar datos, cambiar contraseña, gestionar sesiones activas |
 | `/rutas` | `RutasComponent` | Mapa Leaflet con rutas de transporte, planificación, marcadores de paradas |
-| `/movilidad/boletos` | `BoletosComponent` | Compra y gestión de boletos/tiquetes. Tabla con botón 🗺️ por fila que navega al detalle. |
+| `/movilidad/boletos` | `BoletosComponent` | Compra y gestión de boletos/tiquetes. Tabla con botón 🗺️ por fila que navega al detalle. Visible en sidebar para todos los autenticados. |
 | `/movilidad/boletos/:id` | `DetalleViajeComponent` | **HU-2005.** Detalle de un viaje: mapa Leaflet con polyline de la ruta completa, marcador verde en paradero de abordaje y rojo en descenso, panel lateral con hora de abordaje (`programacion.fecha + horaSalida`), hora de descenso (`boleto.horaFin`), duración calculada, placa/modelo del bus y nombre del conductor. Llama a `GET /boleto/:id` y luego `GET /ruta/:rutaId/paraderos`. Ubicación: `features/boletos/detalle-viaje/`. |
+
+### Conductor (requieren `authGuard` + `roleGuard` — roles: Conductor, admins)
+| Ruta | Componente | Descripción |
+|---|---|---|
+| `/conductor/dashboard` | `DashboardConductorComponent` | **HU-2006.** Turno activo o próximo del conductor. Muestra bus asignado, ruta (de programación), hora de inicio. Botón "Iniciar Turno" si estado=PROGRAMADO → abre dialog con radio Operativo/Con observaciones + textarea condicional. Sección GPS cuando estado=EN_CURSO: activa `watchPosition`, envía coordenadas a `PATCH /gps/:id/posicion`. Ubicación: `features/conductor/dashboard/`. |
+| `/conductor/incidente/nuevo` | `ProximamenteComponent` | Stub — pendiente de implementar |
+| `/ciudadano/tarjeta/recargar` | `ProximamenteComponent` | Stub — pendiente de implementar |
 
 ### Admin (requieren `authGuard` + `roleGuard`)
 | Ruta | Componente | Descripción |
@@ -152,6 +235,13 @@ Las llamadas a NestJS se hacen con `HttpClient` directamente desde `ProfileServi
 | `/admin/permissions/edit/:id` | `PermissionFormComponent` | Editar permiso |
 | `/admin/role-permissions` | `RolePermissionManagerComponent` | Asignar permisos a roles |
 | `/admin/sessions` | `SessionListComponent` | Ver y cerrar sesiones activas de todos los usuarios |
+| `/admin/buses` | `ProximamenteComponent` | Stub — Flota de Buses (Empresa + Sistema) |
+| `/admin/paraderos` | `ProximamenteComponent` | Stub — Paraderos (Empresa + Sistema) |
+| `/admin/rutas` | `ProximamenteComponent` | Stub — Rutas (Empresa + Sistema) |
+| `/admin/programaciones` | `ProximamenteComponent` | Stub — Programaciones (Empresa + Sistema) |
+| `/admin/reportes/ingresos` | `ProximamenteComponent` | Stub — Reporte de Ingresos |
+| `/admin/reportes/demografia` | `ProximamenteComponent` | Stub — Reporte Demográfico |
+| `/admin/reportes/incidentes` | `ProximamenteComponent` | Stub — Reporte de Incidentes |
 
 ---
 
@@ -169,6 +259,46 @@ Las llamadas a NestJS se hacen con `HttpClient` directamente desde `ProfileServi
 - `ToastService` → `success()`, `error()`, `warning()`, `info()` — SnackBar de Material, 4.5s, posición top-right.
 - `ThemeService` → toggle dark/light, persiste en localStorage, expone `isDarkMode$`.
 - `NotificationService` → notificaciones en-app, máx 20, persistidas en localStorage, marcables como leídas.
+
+---
+
+## Servicios de dominio de negocio (NestJS)
+
+### `TurnoService` — `src/app/features/conductor/turno.service.ts`
+
+Servicio singleton para todo lo relacionado con conductores, turnos y GPS. Usa `ApiService` con `environment.negocioUrl` como base (`http://localhost:3000`).
+
+**Interfaces exportadas:** `Persona`, `Bus`, `Conductor`, `Ruta`, `Programacion`, `Turno`, `Gps`
+
+**Métodos:**
+
+| Método | Endpoint NestJS | Notas |
+|---|---|---|
+| `getPersonaBySecurity(securityUserId)` | `GET /persona/security/:id` | Obtiene la Persona del usuario autenticado usando su UUID de Spring Boot |
+| `getConductores()` | `GET /conductor` | Trae todos; se filtra client-side con `Number(c.persona?.id) === Number(persona.id)` |
+| `getTurnosConductor(conductorId)` | `GET /turno/conductor/:conductorId` | Endpoint específico — devuelve solo los turnos del conductor, con conductor+bus anidados |
+| `getProgramaciones()` | `GET /programacion` | Trae todas; se filtra client-side (el ValidationPipe rechaza params no declarados en el DTO) |
+| `iniciarTurno(id, dto)` | `POST /turno/:id/iniciar` | `dto: { observaciones?: string }` → cambia estado a EN_CURSO |
+| `getGps()` | `GET /gps` | Trae todos los dispositivos; se filtra client-side por `bus.id` |
+| `actualizarPosicion(gpsId, lat, lng)` | `PATCH /gps/:id/posicion` | `{ latitud, longitud }` — llamado desde `watchPosition` del navegador |
+
+**Lección aprendida — ValidationPipe estricto:**
+> El backend NestJS rechaza con **400 Bad Request** cualquier query param que no esté en el DTO (`forbidNonWhitelisted: true`). NO enviar `?conductorId=X` a `/programacion` ni `?conductorAsignadoId=X` — esos campos no existen en `FindProgramacionQueryDto`. Siempre traer todo y filtrar en el frontend cuando los params del DTO no están documentados.
+
+**Flujo de identificación conductor (DashboardConductorComponent):**
+```
+currentUser.id (UUID Spring Boot)
+  → GET /persona/security/:id          → Persona { id: number }
+  → GET /conductor (filtro client-side) → Conductor { id: number, persona: {...} }
+  → GET /turno/conductor/:conductorId  → Turno[]
+  → GET /programacion (filtro client)  → Programacion[]
+```
+
+> ⚠️ `persona.id` ≠ `conductor.id`. Siempre usar `conductor.id` para consultar turnos y programaciones. Usar `Number()` en comparaciones de IDs para evitar fallos por tipo string/number.
+
+**Lógica de selección de turno (dashboard):**
+- Se muestra el primer turno EN_CURSO (sin importar fecha) O el próximo PROGRAMADO (inicio >= ahora − 24h).
+- El filtro de fecha exacta a "hoy" es demasiado restrictivo — los turnos pueden crearse para fechas futuras.
 
 ---
 
@@ -319,3 +449,25 @@ export class EntidadService {
 - **Flujo de datos:** `GET /boleto/:id` → extrae `programacion.ruta.id` → `GET /ruta/:rutaId/paraderos` → dibuja mapa.
 - **Navegación hacia el detalle:** botón ícono 🗺️ (`mat-icon-button` con `[routerLink]`) en la columna Acciones de `BoletosComponent`.
 - **Creado:** `shared/components/proximamente/proximamente.component.ts` — stub genérico para rutas futuras sin implementar aún.
+
+### Sesión — Sidebar global + Guards + Rutas stub
+- **Refactorizado:** `app.component.ts` — `navItems[]` plano reemplazado por `navGroups[]` con `roles[]` por grupo. `hasAnyRole()` controla visibilidad reactivamente via `userRoles$`.
+- **Importado:** `MatDividerModule` en AppComponent; `.nav-group-label` y `.nav-divider` en SCSS.
+- **Nuevas rutas en `app.routes.ts`:** grupos `/ciudadano` y `/conductor` con `canActivate: [authGuard, roleGuard]`.
+- **Actualizadas:** `/admin` ahora acepta `['Administrador Sistema', 'Administrador Empresa', 'ADMIN']`.
+- **Nuevas rutas en `admin.routes.ts`:** 7 stubs con `ProximamenteComponent` (buses, paraderos, rutas, programaciones, reportes/*).
+- **`roleGuard`:** ya estaba correcto — lee `route.data?.['roles']` y compara con `auth.getUserRoles()`.
+
+### Sesión — HU-2006 (DashboardConductorComponent)
+- **Creado:** `features/conductor/turno.service.ts` — interfaces + 7 métodos HTTP hacia NestJS.
+- **Creado:** `features/conductor/dashboard/dashboard-conductor.component.ts/html/scss`
+- **Creado:** `features/conductor/dashboard/iniciar-turno-dialog/iniciar-turno-dialog.component.ts` (standalone con template inline)
+- **Flujo:** persona → conductor → `GET /turno/conductor/:id` → `GET /programacion` (filtro client-side).
+- **Dialog iniciar turno:** `MatRadioGroup` (Operativo / Con observaciones) + `valueChanges` para mostrar/ocultar textarea → `POST /turno/:id/iniciar`.
+- **GPS (EN_CURSO):** `navigator.geolocation.watchPosition()` → `PATCH /gps/:id/posicion`. `clearWatch()` en `ngOnDestroy`.
+- **Sidebar:** "Mis Viajes" movido al grupo general (visible para todos). Grupo Conductor visible también para admins.
+- **Errores resueltos:**
+  - Import path dialog (`'../turno.service'` → `'../../turno.service'`).
+  - 400 Bad Request en `/programacion` por params no declarados en DTO → traer todo sin params.
+  - Turno no encontrado → filtro client-side faltaba comparar `conductor.id`; usar `Number()` en comparaciones de ID.
+  - Fecha "hoy" demasiado restrictiva → mostrar próximo PROGRAMADO sin límite de fecha exacta.

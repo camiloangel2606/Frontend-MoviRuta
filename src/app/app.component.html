@@ -9,11 +9,21 @@
       class="app-sidenav"
     >
       <mat-nav-list>
-        <ng-container *ngFor="let item of navItems">
-          <a mat-list-item *ngIf="!item.adminOnly || isAdmin" [routerLink]="item.route" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' || item.route === '/profile' }">
-            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-            <span matListItemTitle class="nav-text">{{ item.label }}</span>
-          </a>
+        <ng-container *ngFor="let group of navGroups; let i = index">
+          <ng-container *ngIf="hasAnyRole(group.roles)">
+            <mat-divider *ngIf="i > 0" class="nav-divider"></mat-divider>
+            <div *ngIf="group.label" class="nav-group-label">{{ group.label }}</div>
+            <a
+              mat-list-item
+              *ngFor="let item of group.items"
+              [routerLink]="item.route"
+              routerLinkActive="active-link"
+              [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' || item.route === '/profile' }"
+            >
+              <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+              <span matListItemTitle class="nav-text">{{ item.label }}</span>
+            </a>
+          </ng-container>
         </ng-container>
       </mat-nav-list>
     </mat-sidenav>
