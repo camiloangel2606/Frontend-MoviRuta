@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { RouterModule } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -16,7 +17,7 @@ import { MatTabsModule } from '@angular/material/tabs';
   selector: 'app-boletos',
   standalone: true,
   imports: [
-    CommonModule, FormsModule,
+    CommonModule, FormsModule, RouterModule,
     MatCardModule, MatFormFieldModule, MatSelectModule, MatOptionModule,
     MatButtonModule, MatIconModule, MatTableModule, MatTabsModule,
   ],

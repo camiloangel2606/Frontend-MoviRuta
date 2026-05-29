@@ -1,0 +1,168 @@
+<div class="detalle-page">
+
+  <!-- ── LOADING ─────────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="isLoading">
+    <div class="detalle-header-skeleton">
+      <app-skeleton type="text" width="120px" height="36px"></app-skeleton>
+      <app-skeleton type="text" width="200px" height="28px"></app-skeleton>
+    </div>
+    <div class="detalle-grid">
+      <app-skeleton type="card" width="100%" height="420px"></app-skeleton>
+      <div class="info-panel-skeleton">
+        <app-skeleton type="stat" width="100%" height="72px"></app-skeleton>
+        <app-skeleton type="stat" width="100%" height="72px"></app-skeleton>
+        <app-skeleton type="stat" width="100%" height="72px"></app-skeleton>
+        <app-skeleton type="stat" width="100%" height="72px"></app-skeleton>
+        <app-skeleton type="stat" width="100%" height="72px"></app-skeleton>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ── ERROR ────────────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="!isLoading && error">
+    <app-empty-state
+      icon="error_outline"
+      title="No se pudo cargar el viaje"
+      subtitle="Verifica tu conexión e intenta de nuevo."
+    >
+      <button mat-stroked-button color="primary" (click)="volver()" style="margin-top: 16px">
+        <mat-icon>arrow_back</mat-icon>
+        Volver a Mis Viajes
+      </button>
+    </app-empty-state>
+  </ng-container>
+
+  <!-- ── CONTENIDO ─────────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="!isLoading && !error && boleto">
+
+    <!-- Cabecera -->
+    <div class="detalle-header">
+      <button mat-icon-button class="btn-volver" (click)="volver()" matTooltip="Volver a Mis Viajes">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-copy">
+        <h1>Detalle del Viaje <span class="viaje-id">#{{ boleto.id }}</span></h1>
+        <p class="ruta-label">
+          <mat-icon inline>route</mat-icon>
+          {{ nombreRuta }}
+        </p>
+      </div>
+      <span class="estado-badge" [class]="estadoClase">{{ estadoLabel }}</span>
+    </div>
+
+    <!-- Grid principal -->
+    <div class="detalle-grid">
+
+      <!-- Panel del mapa -->
+      <section class="mapa-panel">
+        <div class="mapa-header">
+          <mat-icon>map</mat-icon>
+          <span>Recorrido en mapa</span>
+        </div>
+        <div
+          *ngIf="paraderos.length > 0; else sinMapa"
+          #mapaDiv
+          class="mapa-contenedor"
+        ></div>
+        <ng-template #sinMapa>
+          <div class="mapa-vacio">
+            <mat-icon>map</mat-icon>
+            <p>No hay información de paraderos para mostrar el mapa</p>
+          </div>
+        </ng-template>
+
+        <!-- Leyenda -->
+        <div class="mapa-leyenda" *ngIf="paraderos.length > 0">
+          <span class="leyenda-item">
+            <span class="dot verde"></span> Abordaje: {{ paraderoOrigen }}
+          </span>
+          <span class="leyenda-item">
+            <span class="dot rojo"></span> Descenso: {{ paraderoDescenso }}
+          </span>
+        </div>
+      </section>
+
+      <!-- Panel lateral de información -->
+      <aside class="info-panel">
+
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>schedule</mat-icon>
+            <mat-card-title>Tiempos del viaje</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="info-row">
+              <span class="info-label">
+                <mat-icon>login</mat-icon> Abordaje
+              </span>
+              <span class="info-value">{{ horaAbordaje }}</span>
+            </div>
+            <mat-divider></mat-divider>
+            <div class="info-row">
+              <span class="info-label">
+                <mat-icon>logout</mat-icon> Descenso
+              </span>
+              <span class="info-value">{{ horaDescenso }}</span>
+            </div>
+            <mat-divider></mat-divider>
+            <div class="info-row">
+              <span class="info-label">
+                <mat-icon>timer</mat-icon> Duración
+              </span>
+              <span class="info-value highlight">{{ tiempoTotal }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>directions_bus</mat-icon>
+            <mat-card-title>Vehículo y conductor</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="info-row">
+              <span class="info-label">
+                <mat-icon>badge</mat-icon> Placa
+              </span>
+              <span class="info-value placa">{{ placaBus }}</span>
+            </div>
+            <mat-divider></mat-divider>
+            <div class="info-row">
+              <span class="info-label">
+                <mat-icon>directions_bus</mat-icon> Modelo
+              </span>
+              <span class="info-value">{{ modeloBus }}</span>
+            </div>
+            <mat-divider></mat-divider>
+            <div class="info-row">
+              <span class="info-label">
+                <mat-icon>person</mat-icon> Conductor
+              </span>
+              <span class="info-value">{{ nombreConductor }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>payments</mat-icon>
+            <mat-card-title>Costo</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="costo-display">
+              <span class="costo-monto">{{ boleto.costo | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+              <span class="costo-label">Total del trayecto</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <button mat-stroked-button class="btn-volver-abajo" (click)="volver()">
+          <mat-icon>arrow_back</mat-icon>
+          Volver a Mis Viajes
+        </button>
+
+      </aside>
+    </div>
+
+  </ng-container>
+</div>

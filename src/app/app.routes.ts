@@ -61,11 +61,15 @@
     },
     {
       path: 'movilidad',
+      canActivate: [authGuard],
       children: [
         {
           path: 'boletos',
-          // Cargamos directamente el componente de forma perezosa (Lazy Loading)
-          loadComponent: () => import('../app/features/boletos/boletos.component').then(m => m.BoletosComponent)
+          loadComponent: () => import('./features/boletos/boletos.component').then(m => m.BoletosComponent)
+        },
+        {
+          path: 'boletos/:id',
+          loadComponent: () => import('./features/boletos/detalle-viaje/detalle-viaje.component').then(m => m.DetalleViajeComponent)
         }
       ]
     },
