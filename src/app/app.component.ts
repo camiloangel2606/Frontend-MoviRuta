@@ -63,14 +63,14 @@ export class AppComponent implements OnInit, OnDestroy {
     },
     {
       label: 'Ciudadano',
-      roles: ['Ciudadano'],
+      roles: ['CIUDADANO'],
       items: [
         { label: 'Recargar Tarjeta', icon: 'credit_card', route: '/ciudadano/tarjeta/recargar' },
       ]
     },
     {
       label: 'Conductor',
-      roles: ['Conductor', 'Administrador Sistema', 'Administrador Empresa', 'ADMIN'],
+      roles: ['CONDUCTOR'],
       items: [
         { label: 'Mi Turno', icon: 'schedule', route: '/conductor/dashboard' },
         { label: 'Reportar Incidente', icon: 'report_problem', route: '/conductor/incidente/nuevo' },
@@ -78,7 +78,7 @@ export class AppComponent implements OnInit, OnDestroy {
     },
     {
       label: 'Administración',
-      roles: ['Administrador Empresa', 'Administrador Sistema'],
+      roles: ['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN'],
       items: [
         { label: 'Flota de Buses', icon: 'directions_bus', route: '/admin/buses' },
         { label: 'Paraderos', icon: 'place', route: '/admin/paraderos' },
@@ -88,7 +88,7 @@ export class AppComponent implements OnInit, OnDestroy {
     },
     {
       label: 'Reportes',
-      roles: ['Administrador Empresa', 'Administrador Sistema'],
+      roles: ['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN'],
       items: [
         { label: 'Ingresos', icon: 'payments', route: '/admin/reportes/ingresos' },
         { label: 'Demografía', icon: 'people', route: '/admin/reportes/demografia' },
@@ -97,7 +97,7 @@ export class AppComponent implements OnInit, OnDestroy {
     },
     {
       label: 'Sistema',
-      roles: ['Administrador Sistema', 'ADMIN'],
+      roles: ['ADMINISTRADOR_SISTEMA', 'ADMIN'],
       items: [
         { label: 'Usuarios', icon: 'groups', route: '/admin/users' },
         { label: 'Roles', icon: 'verified_user', route: '/admin/roles' },
@@ -129,6 +129,11 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.checkScreenSize();
+    // Garantiza que los roles estén cargados en cualquier ruta de entrada,
+    // no solo cuando el usuario pasa por el Dashboard o hace login en esta sesión.
+    if (this.authService.isAuthenticated() && this.authService.getUserRoles().length === 0) {
+      this.authService.getMyRoles().subscribe();
+    }
   }
 
   ngOnDestroy(): void {
@@ -167,8 +172,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   get isAdmin(): boolean {
-    const roles = this.authService.getUserRoles();
-    return roles.includes('Administrador Sistema') || roles.includes('ADMIN');
+    return this.authService.isAdmin();
   }
 
   toggleSidebar(): void {

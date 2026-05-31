@@ -1,0 +1,249 @@
+<div class="incidente-page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-icon-wrap">
+      <mat-icon>report_problem</mat-icon>
+    </div>
+    <div class="header-copy">
+      <h1>Reportar Incidente</h1>
+      <p class="header-sub">Registra un incidente ocurrido durante tu turno activo</p>
+    </div>
+  </div>
+
+  <!-- Skeleton turno -->
+  <div *ngIf="isLoadingTurno" class="skeleton-grid">
+    <app-skeleton type="card" height="88px"></app-skeleton>
+    <app-skeleton type="card" height="88px"></app-skeleton>
+  </div>
+
+  <!-- Info de turno/bus (no editable) -->
+  <mat-card *ngIf="!isLoadingTurno" class="turno-card">
+    <mat-card-content>
+
+      <!-- Con turno activo -->
+      <ng-container *ngIf="turnoActivo; else sinTurno">
+        <div class="turno-info-grid">
+
+          <div class="turno-info-item">
+            <div class="info-icon-wrap bus">
+              <mat-icon>directions_bus</mat-icon>
+            </div>
+            <div class="info-data">
+              <span class="info-label">Bus asignado</span>
+              <span class="info-value">{{ bus?.placa ?? '—' }}</span>
+              <span class="info-sub">{{ bus?.modelo }} · {{ bus?.anio }}</span>
+            </div>
+          </div>
+
+          <div class="turno-info-item">
+            <div class="info-icon-wrap turno">
+              <mat-icon>badge</mat-icon>
+            </div>
+            <div class="info-data">
+              <span class="info-label">Turno</span>
+              <span class="info-value">#{{ turnoActivo.id }}</span>
+              <span class="info-sub" [class]="'estado-' + turnoActivo.estado.toLowerCase()">
+                {{ turnoActivo.estado }}
+              </span>
+            </div>
+          </div>
+
+        </div>
+        <p class="turno-nota">
+          <mat-icon>lock_outline</mat-icon>
+          Bus y turno obtenidos automáticamente de tu sesión activa
+        </p>
+      </ng-container>
+
+      <!-- Sin turno activo -->
+      <ng-template #sinTurno>
+        <div class="sin-turno">
+          <mat-icon>info_outline</mat-icon>
+          <div>
+            <strong>Sin turno activo</strong>
+            <p>No tienes un turno EN_CURSO o PROGRAMADO. Para reportar un incidente necesitas tener un turno asignado.</p>
+          </div>
+        </div>
+      </ng-template>
+
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Formulario -->
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+    <mat-card class="form-card">
+      <mat-card-header>
+        <div class="section-header">
+          <mat-icon>edit_note</mat-icon>
+          <span>Detalles del incidente</span>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content class="form-fields">
+
+        <!-- Tipo y Gravedad en fila -->
+        <div class="fields-row">
+
+          <mat-form-field appearance="outline" class="field-tipo">
+            <mat-label>Tipo de incidente</mat-label>
+            <mat-select formControlName="tipo">
+              <mat-option *ngFor="let opt of tipoOptions" [value]="opt.value">
+                {{ opt.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>category</mat-icon>
+            <mat-error *ngIf="form.get('tipo')?.hasError('required')">
+              Selecciona el tipo de incidente
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="field-gravedad">
+            <mat-label>Gravedad</mat-label>
+            <mat-select formControlName="gravedad">
+              <mat-option *ngFor="let opt of gravedadOptions" [value]="opt.value">
+                <span class="gravedad-option gravedad-{{ opt.color }}">{{ opt.label }}</span>
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>priority_high</mat-icon>
+            <mat-error *ngIf="form.get('gravedad')?.hasError('required')">
+              Selecciona la gravedad
+            </mat-error>
+          </mat-form-field>
+
+        </div>
+
+        <!-- Aviso si gravedad alta/crítica -->
+        <div
+          class="gravedad-aviso"
+          *ngIf="form.get('gravedad')?.value === 'ALTA' || form.get('gravedad')?.value === 'CRITICA'"
+          [class.critica]="form.get('gravedad')?.value === 'CRITICA'"
+        >
+          <mat-icon>{{ form.get('gravedad')?.value === 'CRITICA' ? 'emergency' : 'warning_amber' }}</mat-icon>
+          <span>
+            Gravedad
+            <strong>{{ form.get('gravedad')?.value === 'CRITICA' ? 'Crítica' : 'Alta' }}</strong>
+            — se pedirá confirmación antes de enviar
+          </span>
+        </div>
+
+        <!-- Descripción -->
+        <mat-form-field appearance="outline" class="field-descripcion">
+          <mat-label>Descripción del incidente</mat-label>
+          <textarea
+            matInput
+            formControlName="descripcion"
+            rows="5"
+            [maxlength]="MAX_DESCRIPCION"
+            placeholder="Describe con detalle qué ocurrió, dónde y cómo..."
+          ></textarea>
+          <mat-hint align="end">
+            <span [class.near-limit]="charCount > MAX_DESCRIPCION * 0.85">
+              {{ charCount }}/{{ MAX_DESCRIPCION }}
+            </span>
+          </mat-hint>
+          <mat-error *ngIf="form.get('descripcion')?.hasError('required')">
+            La descripción es obligatoria
+          </mat-error>
+          <mat-error *ngIf="form.get('descripcion')?.hasError('maxlength')">
+            Máximo {{ MAX_DESCRIPCION }} caracteres
+          </mat-error>
+        </mat-form-field>
+
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Fotos -->
+    <mat-card class="fotos-card">
+      <mat-card-header>
+        <div class="section-header">
+          <mat-icon>photo_library</mat-icon>
+          <span>Fotografías <span class="fotos-count">{{ fotos.length }}/{{ MAX_FOTOS }}</span></span>
+        </div>
+        <p class="section-sub">Opcional — máximo {{ MAX_FOTOS }} imágenes como evidencia</p>
+      </mat-card-header>
+
+      <mat-card-content>
+
+        <!-- Grid de previews -->
+        <div class="fotos-grid" *ngIf="fotos.length > 0">
+          <div class="foto-item" *ngFor="let foto of fotos; let i = index">
+            <img [src]="foto.preview" [alt]="'Fotografía ' + (i + 1)" class="foto-preview">
+            <button
+              mat-icon-button
+              type="button"
+              class="btn-eliminar-foto"
+              (click)="eliminarFoto(i)"
+              [attr.aria-label]="'Eliminar fotografía ' + (i + 1)"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+            <span class="foto-num">{{ i + 1 }}</span>
+          </div>
+        </div>
+
+        <!-- Upload trigger -->
+        <div class="upload-area" [class.has-fotos]="fotos.length > 0">
+          <input
+            #fileInput
+            type="file"
+            accept="image/*"
+            multiple
+            (change)="onFilesSelected($event)"
+            style="display: none"
+          >
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="fileInput.click()"
+            [disabled]="fotos.length >= MAX_FOTOS"
+            class="btn-upload"
+          >
+            <mat-icon>add_photo_alternate</mat-icon>
+            {{ fotos.length === 0 ? 'Agregar fotografías' : 'Agregar más' }}
+          </button>
+          <span class="upload-hint" *ngIf="fotos.length < MAX_FOTOS">
+            {{ MAX_FOTOS - fotos.length }} espacio(s) disponible(s)
+          </span>
+          <span class="upload-hint full" *ngIf="fotos.length >= MAX_FOTOS">
+            Límite alcanzado
+          </span>
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Acciones -->
+    <div class="form-actions">
+      <button
+        mat-button
+        type="button"
+        (click)="onCancelar()"
+        [disabled]="isSubmitting"
+      >
+        <mat-icon>arrow_back</mat-icon>
+        Cancelar
+      </button>
+
+      <button
+        mat-flat-button
+        color="warn"
+        type="submit"
+        [disabled]="isSubmitting || !puedeEnviar"
+        class="btn-reportar"
+      >
+        <mat-progress-spinner
+          *ngIf="isSubmitting"
+          diameter="18"
+          mode="indeterminate"
+          class="btn-spinner"
+        ></mat-progress-spinner>
+        <mat-icon *ngIf="!isSubmitting">report</mat-icon>
+        {{ isSubmitting ? 'Enviando...' : 'Reportar Incidente' }}
+      </button>
+    </div>
+
+  </form>
+
+</div>

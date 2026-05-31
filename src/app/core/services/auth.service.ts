@@ -251,6 +251,11 @@ export class AuthService {
     return this.getUserRoles().includes(role);
   }
 
+  isAdmin(): boolean {
+    const roles = this.getUserRoles();
+    return roles.includes('ADMIN') || roles.includes('ADMINISTRADOR_SISTEMA');
+  }
+
   isAuthenticated(): boolean {
     const token = this.getToken();
     if (!token) {

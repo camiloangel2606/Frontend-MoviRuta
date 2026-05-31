@@ -117,6 +117,43 @@ Las llamadas a NestJS se hacen con `HttpClient` directamente desde `ProfileServi
 
 ---
 
+## Roles del sistema (ms-security)
+
+Los roles vienen del microservicio Spring Boot (`GET /api/user-role/my-roles`). El formato es **SCREAMING_SNAKE_CASE** — siempre mayúsculas. La comparación es case-sensitive.
+
+### Roles conocidos y confirmados
+
+| Rol en BD | Quién lo tiene | Usado en |
+|---|---|---|
+| `CIUDADANO` | Usuario registrado como pasajero | Grupo Ciudadano sidebar + ruta `/ciudadano/**` |
+| `CONDUCTOR` | Conductor de bus | Grupo Conductor sidebar + rutas `/conductor/**` |
+| `ADMIN` | Administrador con acceso total | Grupos Administración, Reportes, Sistema sidebar + rutas `/admin/**` |
+| `ADMINISTRADOR_SISTEMA` | Admin del sistema *(a confirmar si existe separado de ADMIN)* | Mismo alcance que ADMIN |
+| `ADMINISTRADOR_EMPRESA` | Admin de empresa *(a confirmar si existe)* | Administración + Reportes |
+
+> **Rol por defecto al registrarse:** `CIUDADANO` (asignado automáticamente por el backend).
+
+> **Cómo verificar roles de un usuario:** en el panel admin → Usuarios → Administrar Roles, o revisar consola del navegador al login (`[INFO] [Roles] Roles cargados`).
+
+### Cómo se cargan los roles en el frontend
+
+```
+Login (verify-2fa)
+  └─ forkJoin(getMe, getMyRoles)
+        └─ getMyRoles() → GET /api/user-role/my-roles → { "roles": ["CIUDADANO", "CONDUCTOR"] }
+              └─ AuthService.setUserRoles(roles) → localStorage['userRoles'] + userRoles$ BehaviorSubject
+
+AppComponent (constructor)
+  └─ authService.userRoles$.subscribe → this.userRoles = roles
+        └─ hasAnyRole(group.roles) → *ngIf en cada grupo del sidebar
+
+AppComponent (ngOnInit) — safety net
+  └─ Si autenticado y roles vacíos → getMyRoles() de nuevo
+     (cubre el caso de token válido en localStorage pero roles no cacheados)
+```
+
+---
+
 ## Sidebar — Navegación lateral (AppComponent)
 
 El sidenav vive en `src/app/app.component.ts` / `.html`. **No** es un componente separado — está inline en el shell raíz junto al `<mat-sidenav>` de Angular Material.
@@ -137,21 +174,35 @@ El método `hasAnyRole(roles: string[]): boolean` controla visibilidad. Si `role
 
 | Grupo | Roles requeridos | Items |
 |---|---|---|
-| *(General — sin label)* | Ninguno (todos los autenticados) | Dashboard, Perfil, Planificar Rutas, **Mis Viajes** |
-| Ciudadano | `['Ciudadano']` | Recargar Tarjeta |
-| Conductor | `['Conductor', 'Administrador Sistema', 'Administrador Empresa', 'ADMIN']` | Mi Turno, Reportar Incidente |
-| Administración | `['Administrador Empresa', 'Administrador Sistema']` | Flota de Buses, Paraderos, Rutas, Programaciones |
-| Reportes | `['Administrador Empresa', 'Administrador Sistema']` | Ingresos, Demografía, Incidentes |
-| Sistema | `['Administrador Sistema', 'ADMIN']` | Usuarios, Roles, Permisos, Sesiones |
+| *(General — sin label)* | `[]` todos los autenticados | Dashboard, Perfil, Planificar Rutas, Mis Viajes |
+| Ciudadano | `['CIUDADANO']` | Recargar Tarjeta |
+| Conductor | `['CONDUCTOR']` | Mi Turno, Reportar Incidente |
+| Administración | `['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN']` | Flota de Buses, Paraderos, Rutas, Programaciones |
+| Reportes | `['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN']` | Ingresos, Demografía, Incidentes |
+| Sistema | `['ADMINISTRADOR_SISTEMA', 'ADMIN']` | Usuarios, Roles, Permisos, Sesiones |
 
-> **Nota importante:** "Mis Viajes" (`/movilidad/boletos`) está en el grupo general (sin rol) porque la ruta solo usa `authGuard`. Si se pusiera en el grupo Ciudadano, conductores y admins no verían el ítem aunque la ruta sea accesible para todos.
+> **"Mis Viajes"** está en el grupo general porque `/movilidad/boletos` solo requiere `authGuard`. Así la ven todos los roles (ciudadanos, conductores, admins).
 
-> **Admin + Conductor:** el grupo Conductor incluye roles de admin para permitir testing y supervisión. El `roleGuard` en `/conductor/**` acepta los mismos roles.
+### Regla para agregar un ítem nuevo al sidebar
 
-### Cómo agregar un ítem nuevo al sidebar
+```
+Si la HU dice "exclusivo para ROL_X"
+  → Grupo del sidebar: roles: ['ROL_X']
+  → Route guard child: canActivate: [roleGuard], data: { roles: ['ROL_X'] }
+
+Si la HU dice "para admins" (empresa o sistema)
+  → Grupo del sidebar: roles: ['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN']
+  → Route guard: data: { roles: ['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN'] }
+
+Si la HU no tiene restricción de rol (cualquier usuario autenticado)
+  → Grupo del sidebar: grupo general (roles: [])
+  → Route guard: solo authGuard, sin roleGuard
+```
+
+### Pasos concretos para agregar un ítem
 1. Elegir el grupo correcto en `navGroups` dentro de `app.component.ts`.
 2. Agregar `{ label, icon, route }` al array `items`.
-3. Asegurarse de que la ruta exista en `app.routes.ts` o `admin.routes.ts` con los guards correspondientes.
+3. Agregar la ruta en `app.routes.ts` o `admin.routes.ts` con los guards correctos usando los roles en **SCREAMING_SNAKE_CASE**.
 
 ---
 
@@ -160,14 +211,15 @@ El método `hasAnyRole(roles: string[]): boolean` controla visibilidad. Si `role
 ### `app.routes.ts` — grupos relevantes
 ```typescript
 // Ciudadano (authGuard + roleGuard)
-{ path: 'ciudadano', data: { roles: ['Ciudadano'] }, children: [
+{ path: 'ciudadano', data: { roles: ['CIUDADANO'] }, children: [
   { path: 'tarjeta/recargar' }   // ProximamenteComponent
 ]}
 
-// Conductor (authGuard + roleGuard — también acepta admins)
-{ path: 'conductor', data: { roles: ['Conductor', 'Administrador Sistema', 'Administrador Empresa', 'ADMIN'] }, children: [
-  { path: 'dashboard' }          // DashboardConductorComponent ← implementado
-  { path: 'incidente/nuevo' }    // ProximamenteComponent
+// Conductor (authGuard + roleGuard — parent acepta admins para supervisión)
+{ path: 'conductor', data: { roles: ['CONDUCTOR', 'ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA', 'ADMIN'] }, children: [
+  { path: 'dashboard' }          // DashboardConductorComponent (HU-2006)
+  { path: 'incidente/nuevo',     // ReporteIncidenteComponent (HU-2007)
+    canActivate: [roleGuard], data: { roles: ['CONDUCTOR'] } }  // child guard más restrictivo
 ]}
 
 // Movilidad (authGuard heredado — sin roleGuard)
@@ -176,19 +228,25 @@ El método `hasAnyRole(roles: string[]): boolean` controla visibilidad. Si `role
   { path: 'boletos/:id' }        // DetalleViajeComponent
 ]}
 
-// Admin (authGuard + roleGuard — acepta Administrador Empresa también)
-{ path: 'admin', data: { roles: ['Administrador Sistema', 'Administrador Empresa', 'ADMIN'] } }
+// Admin (authGuard + roleGuard)
+{ path: 'admin', data: { roles: ['ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA', 'ADMIN'] } }
 ```
 
-### `admin.routes.ts` — nuevas rutas stub (usan `ProximamenteComponent`)
+### `admin.routes.ts` — constantes de roles
+```typescript
+const ADMIN_EMPRESA_ROLES = ['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN'];
+const ADMIN_SISTEMA_ROLES = ['ADMINISTRADOR_SISTEMA', 'ADMIN'];
+```
+
+### `admin.routes.ts` — rutas stub (usan `ProximamenteComponent`)
 | Ruta | Roles | Título mostrado |
 |---|---|---|
-| `/admin/buses` | Empresa + Sistema | Flota de Buses |
-| `/admin/paraderos` | Empresa + Sistema | Paraderos |
-| `/admin/rutas` | Empresa + Sistema | Rutas |
-| `/admin/programaciones` | Empresa + Sistema | Programaciones |
-| `/admin/reportes/ingresos` | Empresa + Sistema | Reporte de Ingresos |
-| `/admin/reportes/demografia` | Empresa + Sistema | Reporte Demográfico |
+| `/admin/buses` | ADMIN_EMPRESA_ROLES | Flota de Buses |
+| `/admin/paraderos` | ADMIN_EMPRESA_ROLES | Paraderos |
+| `/admin/rutas` | ADMIN_EMPRESA_ROLES | Rutas |
+| `/admin/programaciones` | ADMIN_EMPRESA_ROLES | Programaciones |
+| `/admin/reportes/ingresos` | ADMIN_EMPRESA_ROLES | Reporte de Ingresos |
+| `/admin/reportes/demografia` | ADMIN_EMPRESA_ROLES | Reporte Demográfico |
 | `/admin/reportes/incidentes` | Empresa + Sistema | Reporte de Incidentes |
 
 ---

@@ -62,6 +62,26 @@ export interface Gps {
   longitud: number | null;
 }
 
+export interface Incidente {
+  id: number;
+  bus: Bus;
+  tipo: string;
+  gravedad: string;
+  descripcion: string;
+  estado: string;
+}
+
+export interface CreateIncidenteDto {
+  busId: number;
+  reportadoPorId?: number;
+  tipo: string;
+  gravedad: string;
+  descripcion: string;
+  estado?: string;
+  latitud?: number;
+  longitud?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TurnoService {
   private readonly base = (environment as any).negocioUrl ?? 'http://localhost:3000';
@@ -94,5 +114,9 @@ export class TurnoService {
 
   actualizarPosicion(gpsId: number, latitud: number, longitud: number): Observable<Gps> {
     return this.api.patch<Gps>(`${this.base}/gps/${gpsId}/posicion`, { latitud, longitud });
+  }
+
+  crearIncidente(dto: CreateIncidenteDto): Observable<Incidente> {
+    return this.api.post<Incidente>(`${this.base}/incidente`, dto);
   }
 }
