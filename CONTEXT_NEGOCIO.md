@@ -331,6 +331,7 @@ MS_SECURITY=http://localhost:8080
 |---|---|---|---|---|
 | POST | `/turno` | Crea turno | `{ conductorId, busId, inicio, fin?, estado?, observaciones? }` | Turno |
 | GET | `/turno` | Lista todos | — | Turno[] |
+| GET | `/turno/conductor/:conductorId` | Lista todos los turnos de un conductor | — | Turno[] |
 | GET | `/turno/:id` | Detalle | — | Turno |
 | PATCH | `/turno/:id` | Actualiza | campos parciales | Turno |
 | DELETE | `/turno/:id` | Elimina | — | — |
@@ -472,8 +473,8 @@ MS_SECURITY=http://localhost:8080
 
 | Método | Ruta | Qué hace | Body esperado | Respuesta |
 |---|---|---|---|---|
-| POST | `/incidente` | Reporta incidente | `{ busId, reportadoPorId?, tipo, gravedad, descripcion, estado?, latitud?, longitud? }` | Incidente |
-| GET | `/incidente` | Lista (soporta filtros por query) | — | Incidente[] |
+| POST | `/incidente` | Reporta incidente | `{ busId, reportadoPorId?, tipo, gravedad, descripcion, estado?, latitud?, longitud?, fotos?: string[] }` | Incidente |
+| GET | `/incidente` | Lista (soporta filtros por query) | — | `{ data: Incidente[], total, page, limit }` |
 | GET | `/incidente/:id` | Detalle | — | Incidente |
 | PATCH | `/incidente/:id` | Actualiza estado/datos | campos parciales | Incidente |
 | DELETE | `/incidente/:id` | Elimina | — | — |
@@ -585,8 +586,16 @@ La URL base de ms-security se configura con la variable `MS_SECURITY=http://loca
 
 9. **Mensajería.** Un mensaje puede tener destinatarios individuales (`destinatariosPersonaIds`) y/o grupales (`destinatariosGrupoIds`) en el mismo request. Para marcar como leído usar `PATCH /destinatario-persona/:id/leido`.
 
-10. **Fotos de incidentes.** Se almacenan como URLs (`url: string`). El frontend debe subir la imagen a un servicio externo (S3, Cloudinary, etc.) y enviar la URL resultante a `POST /foto`.
+10. **Fotos de incidentes.** Se almacenan como URLs (`url: string`). Hay dos formas de adjuntarlas:
+    - En la creación: incluir `fotos: string[]` en el body del `POST /incidente` (máx 5 URLs, cada una máx **400 caracteres**). No usar base64 — excede el límite.
+    - Post-creación: llamar `POST /foto` con `{ incidenteId, url }` por cada foto usando el `id` del incidente ya creado.
+
+11. **Coordenadas GPS en incidentes.** `latitud` y `longitud` aceptan hasta **7 decimales** (`@IsNumber({ maxDecimalPlaces: 7 })`). `navigator.geolocation` devuelve 10–15 decimales → siempre redondear antes de enviar: `parseFloat(coords.lat.toFixed(7))`.
+
+12. **Respuesta paginada de `GET /incidente`.** Devuelve `{ data: Incidente[], total: number, page: number, limit: number }` — **no** un array plano. Al consumir, extraer `.data`. Lo mismo aplica a otros endpoints que usen paginación.
 
 11. **Turno vs Programacion.** Son entidades distintas: `Programacion` es el horario planificado (ruta + bus + conductor + fecha/hora); `Turno` es el registro de trabajo real del conductor (inicio/fin efectivos). Un turno se inicia con `POST /turno/:id/iniciar` y se cierra con `POST /turno/:id/finalizar`.
+
+13. **Turnos por conductor.** Usar `GET /turno/conductor/:conductorId` para obtener todos los turnos de un conductor específico. Retorna `404` si el conductor no existe y `[]` si no tiene turnos asignados. La ruta `/conductor/:conductorId` está declarada antes de `/:id` en el controlador para evitar conflicto de rutas en NestJS.
 
 12. **ValidationPipe estricto.** El backend rechazará (HTTP 400) cualquier campo extra no definido en los DTOs. Enviar exactamente los campos documentados.

@@ -146,6 +146,38 @@
   }
 }
 
+.gps-estado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  &.gps-buscando {
+    background: rgba(0, 0, 0, 0.04);
+    opacity: 0.6;
+  }
+
+  &.gps-obtenido {
+    background: rgba(76, 175, 80, 0.1);
+    color: #2e7d32;
+    mat-icon { color: #43a047; }
+  }
+
+  &.gps-no-disponible {
+    background: rgba(0, 0, 0, 0.04);
+    opacity: 0.5;
+  }
+}
+
 .sin-turno {
   display: flex;
   align-items: flex-start;

@@ -117,92 +117,99 @@ Las llamadas a NestJS se hacen con `HttpClient` directamente desde `ProfileServi
 
 ---
 
-## Roles del sistema (ms-security)
+## Roles del sistema (ms-security) — DEFINITIVOS
 
-Los roles vienen del microservicio Spring Boot (`GET /api/user-role/my-roles`). El formato es **SCREAMING_SNAKE_CASE** — siempre mayúsculas. La comparación es case-sensitive.
+Los roles vienen del microservicio Spring Boot (`GET /api/user-role/my-roles`).  
+**Formato: SCREAMING_SNAKE_CASE, siempre mayúsculas, comparación case-sensitive.**
 
-### Roles conocidos y confirmados
+### Tabla de roles
 
-| Rol en BD | Quién lo tiene | Usado en |
+| Rol | Descripción | Acceso en sidebar |
 |---|---|---|
-| `CIUDADANO` | Usuario registrado como pasajero | Grupo Ciudadano sidebar + ruta `/ciudadano/**` |
-| `CONDUCTOR` | Conductor de bus | Grupo Conductor sidebar + rutas `/conductor/**` |
-| `ADMIN` | Administrador con acceso total | Grupos Administración, Reportes, Sistema sidebar + rutas `/admin/**` |
-| `ADMINISTRADOR_SISTEMA` | Admin del sistema *(a confirmar si existe separado de ADMIN)* | Mismo alcance que ADMIN |
-| `ADMINISTRADOR_EMPRESA` | Admin de empresa *(a confirmar si existe)* | Administración + Reportes |
+| `CIUDADANO` | Usuario regular de la plataforma. Rol por defecto al registrarse. | Grupo Ciudadano |
+| `CONDUCTOR` | Ofrece servicios de transporte. | Grupo Conductor |
+| `ADMIN_EMPRESA` | Gestión operativa de la empresa. | Grupos Administración + Reportes |
+| `SUPERVISOR` | Supervisa operaciones. | Grupos Administración + Reportes |
+| `ADMIN` | Administrador general del sistema. Acceso total. | Todos los grupos admin + Sistema |
 
-> **Rol por defecto al registrarse:** `CIUDADANO` (asignado automáticamente por el backend).
-
-> **Cómo verificar roles de un usuario:** en el panel admin → Usuarios → Administrar Roles, o revisar consola del navegador al login (`[INFO] [Roles] Roles cargados`).
+> **`ADMIN`** es el único rol que ve el grupo **Sistema** (Usuarios, Roles, Permisos, Sesiones).  
+> **`SUPERVISOR`** ve las mismas secciones operativas que `ADMIN_EMPRESA` pero no tiene acceso a Sistema.  
+> **`CIUDADANO`** y **`CONDUCTOR`** son grupos completamente separados — un usuario puede tener ambos roles si el negocio lo requiere.
 
 ### Cómo se cargan los roles en el frontend
 
 ```
-Login (verify-2fa)
-  └─ forkJoin(getMe, getMyRoles)
-        └─ getMyRoles() → GET /api/user-role/my-roles → { "roles": ["CIUDADANO", "CONDUCTOR"] }
-              └─ AuthService.setUserRoles(roles) → localStorage['userRoles'] + userRoles$ BehaviorSubject
+Login (verify-2fa) o refresh con token válido
+  └─ getMyRoles() → GET /api/user-role/my-roles → { "roles": ["CONDUCTOR"] }
+        └─ AuthService.setUserRoles(roles)
+              ├─ localStorage['userRoles'] = JSON.stringify(roles)
+              └─ userRoles$ BehaviorSubject.next(roles)
 
 AppComponent (constructor)
   └─ authService.userRoles$.subscribe → this.userRoles = roles
-        └─ hasAnyRole(group.roles) → *ngIf en cada grupo del sidebar
+        └─ hasAnyRole(group.roles) reevalúa *ngIf de cada grupo
 
 AppComponent (ngOnInit) — safety net
-  └─ Si autenticado y roles vacíos → getMyRoles() de nuevo
-     (cubre el caso de token válido en localStorage pero roles no cacheados)
+  └─ Si autenticado Y getUserRoles().length === 0 → getMyRoles()
+     (cubre navegación directa con token en localStorage pero sin roles cacheados)
 ```
 
 ---
 
 ## Sidebar — Navegación lateral (AppComponent)
 
-El sidenav vive en `src/app/app.component.ts` / `.html`. **No** es un componente separado — está inline en el shell raíz junto al `<mat-sidenav>` de Angular Material.
+El sidenav vive en `src/app/app.component.ts` / `.html`. **No** es un componente separado — inline en el shell raíz con `<mat-sidenav>` de Angular Material.
 
 ### Estructura navGroups
 ```typescript
-// app.component.ts
 interface NavGroup {
-  label: string;     // '' = sin encabezado de grupo
+  label: string;     // '' = sin encabezado de sección
   roles: string[];   // [] = visible para cualquier usuario autenticado
   items: NavItemDef[];
 }
 ```
 
-El método `hasAnyRole(roles: string[]): boolean` controla visibilidad. Si `roles` es vacío → siempre visible. La suscripción a `authService.userRoles$` se hace en el constructor y actualiza `userRoles: string[]` reactivamente.
+`hasAnyRole(roles)` → si el array está vacío siempre devuelve `true`. Si tiene roles, devuelve `true` si el usuario tiene AL MENOS UNO.
 
-### Grupos configurados (estado actual)
+### Estado actual de grupos
 
-| Grupo | Roles requeridos | Items |
+| Grupo | `roles[]` | Ítems |
 |---|---|---|
-| *(General — sin label)* | `[]` todos los autenticados | Dashboard, Perfil, Planificar Rutas, Mis Viajes |
+| *(General)* | `[]` — todos los autenticados | Dashboard, Perfil, Planificar Rutas, Mis Viajes |
 | Ciudadano | `['CIUDADANO']` | Recargar Tarjeta |
 | Conductor | `['CONDUCTOR']` | Mi Turno, Reportar Incidente |
-| Administración | `['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN']` | Flota de Buses, Paraderos, Rutas, Programaciones |
-| Reportes | `['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN']` | Ingresos, Demografía, Incidentes |
-| Sistema | `['ADMINISTRADOR_SISTEMA', 'ADMIN']` | Usuarios, Roles, Permisos, Sesiones |
+| Administración | `['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR']` | Flota de Buses, Paraderos, Rutas, Programaciones |
+| Reportes | `['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR']` | Ingresos, Demografía, Incidentes |
+| Sistema | `['ADMIN']` | Usuarios, Roles, Permisos, Sesiones |
 
-> **"Mis Viajes"** está en el grupo general porque `/movilidad/boletos` solo requiere `authGuard`. Así la ven todos los roles (ciudadanos, conductores, admins).
-
-### Regla para agregar un ítem nuevo al sidebar
+### Regla para agregar una nueva sección al sidebar
 
 ```
-Si la HU dice "exclusivo para ROL_X"
-  → Grupo del sidebar: roles: ['ROL_X']
-  → Route guard child: canActivate: [roleGuard], data: { roles: ['ROL_X'] }
+HU exclusiva para CONDUCTOR
+  sidebar → grupo Conductor, roles: ['CONDUCTOR']
+  ruta child → canActivate: [roleGuard], data: { roles: ['CONDUCTOR'] }
 
-Si la HU dice "para admins" (empresa o sistema)
-  → Grupo del sidebar: roles: ['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN']
-  → Route guard: data: { roles: ['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN'] }
+HU exclusiva para CIUDADANO
+  sidebar → grupo Ciudadano, roles: ['CIUDADANO']
+  ruta → canActivate: [authGuard, roleGuard], data: { roles: ['CIUDADANO'] }
 
-Si la HU no tiene restricción de rol (cualquier usuario autenticado)
-  → Grupo del sidebar: grupo general (roles: [])
-  → Route guard: solo authGuard, sin roleGuard
+HU para gestión operativa (empresa/supervisión)
+  sidebar → grupo Administración o Reportes
+  ruta → data: { roles: ['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'] }
+
+HU solo para ADMIN (configuración del sistema)
+  sidebar → grupo Sistema
+  ruta → data: { roles: ['ADMIN'] }
+
+HU para todos los autenticados (sin restricción de rol)
+  sidebar → grupo general (roles: [])
+  ruta → solo canActivate: [authGuard], sin roleGuard
 ```
 
-### Pasos concretos para agregar un ítem
-1. Elegir el grupo correcto en `navGroups` dentro de `app.component.ts`.
-2. Agregar `{ label, icon, route }` al array `items`.
-3. Agregar la ruta en `app.routes.ts` o `admin.routes.ts` con los guards correctos usando los roles en **SCREAMING_SNAKE_CASE**.
+### Pasos para agregar un ítem
+1. Identificar el rol de la HU → elegir el grupo en `navGroups` de `app.component.ts`.
+2. Agregar `{ label: 'Texto', icon: 'material_icon', route: '/ruta' }` al array `items`.
+3. Agregar la ruta en `app.routes.ts` (para `/ciudadano/**`, `/conductor/**`, `/movilidad/**`) o en `admin.routes.ts` (para `/admin/**`) con `loadComponent()` + guards usando los nombres de rol exactos en mayúsculas.
 
 ---
 
@@ -215,27 +222,27 @@ Si la HU no tiene restricción de rol (cualquier usuario autenticado)
   { path: 'tarjeta/recargar' }   // ProximamenteComponent
 ]}
 
-// Conductor (authGuard + roleGuard — parent acepta admins para supervisión)
-{ path: 'conductor', data: { roles: ['CONDUCTOR', 'ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA', 'ADMIN'] }, children: [
+// Conductor (authGuard + roleGuard — parent acepta admins/supervisor para supervisión)
+{ path: 'conductor', data: { roles: ['CONDUCTOR', 'ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'] }, children: [
   { path: 'dashboard' }          // DashboardConductorComponent (HU-2006)
   { path: 'incidente/nuevo',     // ReporteIncidenteComponent (HU-2007)
-    canActivate: [roleGuard], data: { roles: ['CONDUCTOR'] } }  // child guard más restrictivo
+    canActivate: [roleGuard], data: { roles: ['CONDUCTOR'] } }  // child más restrictivo
 ]}
 
-// Movilidad (authGuard heredado — sin roleGuard)
+// Movilidad (authGuard heredado — sin roleGuard, visible para todos)
 { path: 'movilidad', children: [
   { path: 'boletos' }            // BoletosComponent
   { path: 'boletos/:id' }        // DetalleViajeComponent
 ]}
 
 // Admin (authGuard + roleGuard)
-{ path: 'admin', data: { roles: ['ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA', 'ADMIN'] } }
+{ path: 'admin', data: { roles: ['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'] } }
 ```
 
 ### `admin.routes.ts` — constantes de roles
 ```typescript
-const ADMIN_EMPRESA_ROLES = ['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN'];
-const ADMIN_SISTEMA_ROLES = ['ADMINISTRADOR_SISTEMA', 'ADMIN'];
+const ADMIN_EMPRESA_ROLES = ['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR']; // operativo
+const ADMIN_SISTEMA_ROLES = ['ADMIN'];                                  // solo superadmin
 ```
 
 ### `admin.routes.ts` — rutas stub (usan `ProximamenteComponent`)
@@ -276,7 +283,7 @@ const ADMIN_SISTEMA_ROLES = ['ADMINISTRADOR_SISTEMA', 'ADMIN'];
 | Ruta | Componente | Descripción |
 |---|---|---|
 | `/conductor/dashboard` | `DashboardConductorComponent` | **HU-2006.** Turno activo o próximo del conductor. Muestra bus asignado, ruta (de programación), hora de inicio. Botón "Iniciar Turno" si estado=PROGRAMADO → abre dialog con radio Operativo/Con observaciones + textarea condicional. Sección GPS cuando estado=EN_CURSO: activa `watchPosition`, envía coordenadas a `PATCH /gps/:id/posicion`. Ubicación: `features/conductor/dashboard/`. |
-| `/conductor/incidente/nuevo` | `ProximamenteComponent` | Stub — pendiente de implementar |
+| `/conductor/incidente/nuevo` | `ReporteIncidenteComponent` | **HU-2007.** Formulario de reporte rápido: tipo, gravedad, descripción, hasta 5 fotos. Captura GPS con `getCurrentPosition` (redondeado a 7 decimales). Crea incidente vía `POST /incidente`, luego sube fotos con `POST /foto` usando el `id` devuelto. Dialog de confirmación para gravedad ALTA/CRITICA. Ubicación: `features/conductor/incidente/`. |
 | `/ciudadano/tarjeta/recargar` | `ProximamenteComponent` | Stub — pendiente de implementar |
 
 ### Admin (requieren `authGuard` + `roleGuard`)
@@ -299,7 +306,8 @@ const ADMIN_SISTEMA_ROLES = ['ADMINISTRADOR_SISTEMA', 'ADMIN'];
 | `/admin/programaciones` | `ProximamenteComponent` | Stub — Programaciones (Empresa + Sistema) |
 | `/admin/reportes/ingresos` | `ProximamenteComponent` | Stub — Reporte de Ingresos |
 | `/admin/reportes/demografia` | `ProximamenteComponent` | Stub — Reporte Demográfico |
-| `/admin/reportes/incidentes` | `ProximamenteComponent` | Stub — Reporte de Incidentes |
+| `/admin/reportes/incidentes` | `IncidentesBusComponent` | **HU-2008 (modo general).** Lista todos los incidentes de la flota. 3 stats cards (total, tipo más frecuente, tasa resolución). Filtros cliente por tipo y estado. Tabla con columnas bus, fecha, conductor, tipo, gravedad (chip), estado. Click en fila abre MatDrawer lateral con datos completos, fotos, comentarios de sesión y cambio de estado vía PATCH. |
+| `/admin/buses/:id/incidentes` | `IncidentesBusComponent` | **HU-2008 (modo bus).** Igual que el anterior pero filtrado por `busId` de la ruta. Sin entrada en sidebar — se navega desde Flota de Buses. |
 
 ---
 
@@ -529,3 +537,21 @@ export class EntidadService {
   - 400 Bad Request en `/programacion` por params no declarados en DTO → traer todo sin params.
   - Turno no encontrado → filtro client-side faltaba comparar `conductor.id`; usar `Number()` en comparaciones de ID.
   - Fecha "hoy" demasiado restrictiva → mostrar próximo PROGRAMADO sin límite de fecha exacta.
+
+### Sesión — HU-2007 (ReporteIncidenteComponent)
+- **Implementado:** `features/conductor/incidente/reporte-incidente.component.ts/html/scss` (reemplaza stub).
+- **GPS:** `navigator.geolocation.getCurrentPosition()` en `ngOnInit`, timeout 10s. Resultado en `coordenadasActuales`. **Redondear a 7 decimales** con `parseFloat(val.toFixed(7))` antes de enviar — el DTO del backend valida `maxDecimalPlaces: 7`.
+- **Fotos:** flujo async en `enviarReporte()`: crea incidente → captura `incidente.id` → convierte cada File a base64 data-URL con `FileReader` → `POST /foto` con `{ incidenteId, url }` por cada foto. `Promise.allSettled` para no bloquear si alguna falla.
+- **Agregado a `TurnoService`:** `crearFoto(dto: { incidenteId, url })` → `POST /foto`.
+- **Errores resueltos:**
+  - 400 en `POST /incidente` por coordenadas con >7 decimales → `parseFloat(val.toFixed(7))`.
+  - `GET /incidente` devuelve `{ data: [], total, page, limit }` (paginado), no array plano → usar `normalizar<T>()` que extrae `.data` si existe.
+
+### Sesión — HU-2008 (IncidentesBusComponent)
+- **Creado:** `features/admin/components/incidentes-bus/` + `services/incidente-bus.service.ts`.
+- **Ruta sidebar:** `/admin/reportes/incidentes` → modo general (todos los buses). **Ruta drill-down:** `/admin/buses/:id/incidentes` → modo bus (filtrado por `busId`). Ambas con `canActivate: [authGuard, roleGuard]`, `data: { roles: ADMIN_EMPRESA_ROLES }` (`['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR']`).
+- **Getter `modoBus`:** `busId > 0` → filtra incidentes; `busId === 0` → muestra todos.
+- **Helper `normalizar<T>(respuesta)`:** maneja tanto array plano como `{ data: T[] }` paginado.
+- **Errores resueltos:**
+  - Selector de `SkeletonLoaderComponent` es `app-skeleton`, no `app-skeleton-loader`.
+  - Roles de ruta deben ser `ADMIN_EMPRESA_ROLES` — strings como `'Administrador Sistema'` no coinciden con los roles reales del backend.

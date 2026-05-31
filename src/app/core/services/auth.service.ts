@@ -252,8 +252,7 @@ export class AuthService {
   }
 
   isAdmin(): boolean {
-    const roles = this.getUserRoles();
-    return roles.includes('ADMIN') || roles.includes('ADMINISTRADOR_SISTEMA');
+    return this.getUserRoles().includes('ADMIN');
   }
 
   isAuthenticated(): boolean {

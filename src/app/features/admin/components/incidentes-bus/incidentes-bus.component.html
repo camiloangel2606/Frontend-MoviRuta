@@ -1,0 +1,323 @@
+<div class="incidentes-bus-container">
+
+  <!-- CABECERA -->
+  <div class="page-header">
+    <button mat-icon-button (click)="onVolver()" class="btn-volver">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="header-icon-wrap">
+      <mat-icon>{{ modoBus ? 'directions_bus' : 'warning' }}</mat-icon>
+    </div>
+    <div class="header-text">
+      <h1 class="page-title">
+        {{ modoBus ? 'Incidentes del Bus #' + busId : 'Reporte General de Incidentes' }}
+      </h1>
+      <p class="page-subtitle">
+        {{ modoBus
+          ? 'Historial de incidentes reportados para este vehículo'
+          : 'Todos los incidentes registrados en la flota' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- ESTADO DE CARGA -->
+  <ng-container *ngIf="isLoading">
+    <div class="stats-row">
+      <app-skeleton type="stat" *ngFor="let i of [1, 2, 3]" />
+    </div>
+    <app-skeleton type="card" height="400px" />
+  </ng-container>
+
+  <!-- CONTENIDO PRINCIPAL con DRAWER -->
+  <ng-container *ngIf="!isLoading">
+
+    <!-- TÍTULO ESTADÍSTICAS -->
+    <div class="seccion-titulo">
+      <mat-icon>bar_chart</mat-icon>
+      <span>Resumen</span>
+    </div>
+
+    <!-- TARJETAS DE ESTADÍSTICAS -->
+    <div class="stats-row">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon stat-icon-total">
+            <mat-icon>report</mat-icon>
+          </div>
+          <div class="stat-data">
+            <span class="stat-value">{{ totalIncidentes }}</span>
+            <span class="stat-label">Total de incidentes</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon stat-icon-tipo">
+            <mat-icon>category</mat-icon>
+          </div>
+          <div class="stat-data">
+            <span class="stat-value stat-value-sm">{{ tipoMasFrecuente }}</span>
+            <span class="stat-label">Tipo más frecuente</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon stat-icon-resolucion">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <div class="stat-data">
+            <span class="stat-value">{{ tasaResolucion }}%</span>
+            <span class="stat-label">Tasa de resolución</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- DRAWER CONTAINER: tabla + panel lateral -->
+    <mat-drawer-container class="drawer-container" autosize>
+
+      <!-- PANEL LATERAL DE DETALLE -->
+      <mat-drawer #drawer mode="over" position="end" class="detalle-drawer" (closed)="onDrawerClosed()">
+        <ng-container *ngIf="incidenteSeleccionado">
+          <div class="drawer-header">
+            <h2 class="drawer-title">Detalle del Incidente #{{ incidenteSeleccionado.id }}</h2>
+            <button mat-icon-button (click)="cerrarDrawer()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <div class="drawer-body">
+            <!-- DATOS COMPLETOS -->
+            <section class="drawer-section">
+              <h3 class="section-title">Información general</h3>
+              <div class="dato-fila">
+                <span class="dato-label">Tipo</span>
+                <span class="dato-valor">{{ labelTipo(incidenteSeleccionado.tipo) }}</span>
+              </div>
+              <div class="dato-fila">
+                <span class="dato-label">Gravedad</span>
+                <span class="chip" [ngClass]="claseGravedad(incidenteSeleccionado.gravedad)">
+                  {{ labelGravedad(incidenteSeleccionado.gravedad) }}
+                </span>
+              </div>
+              <div class="dato-fila">
+                <span class="dato-label">Estado actual</span>
+                <span class="chip" [ngClass]="claseEstado(incidenteSeleccionado.estado)">
+                  {{ labelEstado(incidenteSeleccionado.estado) }}
+                </span>
+              </div>
+              <div class="dato-fila">
+                <span class="dato-label">Conductor</span>
+                <span class="dato-valor">{{ nombreConductor(incidenteSeleccionado) }}</span>
+              </div>
+              <div class="dato-fila" *ngIf="incidenteSeleccionado.createdAt">
+                <span class="dato-label">Fecha</span>
+                <span class="dato-valor">{{ incidenteSeleccionado.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="dato-fila" *ngIf="incidenteSeleccionado.latitud">
+                <span class="dato-label">Coordenadas</span>
+                <span class="dato-valor">
+                  {{ incidenteSeleccionado.latitud }}, {{ incidenteSeleccionado.longitud }}
+                </span>
+              </div>
+              <div class="descripcion-bloque">
+                <span class="dato-label">Descripción</span>
+                <p class="descripcion-texto">{{ incidenteSeleccionado.descripcion }}</p>
+              </div>
+            </section>
+
+            <!-- GALERÍA DE FOTOS -->
+            <section class="drawer-section">
+              <h3 class="section-title">Fotografías</h3>
+              <div *ngIf="isLoadingFotos" class="fotos-loading">
+                <mat-spinner diameter="32" />
+                <span>Cargando fotografías...</span>
+              </div>
+              <div *ngIf="!isLoadingFotos && fotosDelIncidente.length === 0" class="fotos-vacio">
+                <mat-icon>photo_library</mat-icon>
+                <span>Sin fotografías adjuntas</span>
+              </div>
+              <div *ngIf="!isLoadingFotos && fotosDelIncidente.length > 0" class="foto-grid">
+                <a *ngFor="let foto of fotosDelIncidente"
+                   [href]="foto.url"
+                   target="_blank"
+                   class="foto-item">
+                  <img [src]="foto.url" [alt]="'Foto ' + foto.id" />
+                </a>
+              </div>
+            </section>
+
+            <!-- HISTORIAL DE COMENTARIOS -->
+            <section class="drawer-section">
+              <h3 class="section-title">Comentarios</h3>
+              <div *ngIf="comentariosDelIncidente.length === 0" class="comentarios-vacio">
+                Sin comentarios aún.
+              </div>
+              <div class="comentario-lista">
+                <div *ngFor="let c of comentariosDelIncidente" class="comentario-item">
+                  <div class="comentario-meta">
+                    <mat-icon class="comentario-icon">chat_bubble</mat-icon>
+                    <span class="comentario-fecha">{{ c.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+                  </div>
+                  <p class="comentario-texto">{{ c.texto }}</p>
+                </div>
+              </div>
+
+              <!-- Campo para nuevo comentario -->
+              <mat-form-field class="campo-comentario" appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Agregar comentario</mat-label>
+                <textarea matInput
+                          [(ngModel)]="nuevoComentario"
+                          rows="3"
+                          maxlength="300"
+                          placeholder="Escribe un comentario sobre este incidente..."></textarea>
+                <mat-hint align="end">{{ nuevoComentario.length }}/300</mat-hint>
+              </mat-form-field>
+              <button mat-stroked-button
+                      color="primary"
+                      (click)="agregarComentario()"
+                      [disabled]="!nuevoComentario.trim()">
+                <mat-icon>add_comment</mat-icon>
+                Agregar comentario
+              </button>
+            </section>
+
+            <!-- CAMBIO DE ESTADO -->
+            <section class="drawer-section">
+              <h3 class="section-title">Cambiar estado</h3>
+              <mat-form-field appearance="outline" class="select-estado" subscriptSizing="dynamic">
+                <mat-label>Nuevo estado</mat-label>
+                <mat-select [(ngModel)]="nuevoEstado">
+                  <mat-option *ngFor="let op of estadoCambioOpciones" [value]="op.value">
+                    {{ op.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <button mat-flat-button
+                      color="primary"
+                      (click)="guardarCambioEstado()"
+                      [disabled]="!estadoCambiado || isActualizando">
+                <mat-spinner *ngIf="isActualizando" diameter="18" class="spinner-inline" />
+                <mat-icon *ngIf="!isActualizando">save</mat-icon>
+                {{ isActualizando ? 'Guardando...' : 'Guardar estado' }}
+              </button>
+            </section>
+          </div>
+        </ng-container>
+      </mat-drawer>
+
+      <!-- CONTENIDO DE LA TABLA -->
+      <mat-drawer-content>
+
+        <!-- TÍTULO SECCIÓN TABLA -->
+        <div class="seccion-titulo">
+          <mat-icon>table_rows</mat-icon>
+          <span>Registro de incidentes</span>
+        </div>
+
+        <!-- FILTROS -->
+        <div class="filtros-row">
+          <mat-form-field appearance="outline" class="filtro-select" subscriptSizing="dynamic">
+            <mat-label>Filtrar por tipo</mat-label>
+            <mat-select [(ngModel)]="filtroTipo">
+              <mat-option *ngFor="let op of tipoOpciones" [value]="op.value">
+                {{ op.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filtro-select" subscriptSizing="dynamic">
+            <mat-label>Filtrar por estado</mat-label>
+            <mat-select [(ngModel)]="filtroEstado">
+              <mat-option *ngFor="let op of estadoOpciones" [value]="op.value">
+                {{ op.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <span class="filtro-contador">
+            {{ incidentesFiltrados.length }} de {{ totalIncidentes }} incidente(s)
+          </span>
+        </div>
+
+        <!-- TABLA -->
+        <mat-card class="tabla-card">
+          <mat-card-content>
+            <ng-container *ngIf="incidentesFiltrados.length === 0; else tablaContent">
+              <app-empty-state
+                icon="report_off"
+                title="Sin incidentes"
+                subtitle="No se encontraron incidentes con los filtros aplicados."
+                variant="compact" />
+            </ng-container>
+
+            <ng-template #tablaContent>
+              <div class="tabla-wrapper">
+                <table mat-table [dataSource]="incidentesFiltrados" class="incidentes-table">
+
+                  <!-- BUS (solo modo general) -->
+                  <ng-container matColumnDef="bus">
+                    <th mat-header-cell *matHeaderCellDef>Bus</th>
+                    <td mat-cell *matCellDef="let row">
+                      {{ row.bus?.placa ?? '—' }}
+                    </td>
+                  </ng-container>
+
+                  <!-- FECHA -->
+                  <ng-container matColumnDef="fecha">
+                    <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                    <td mat-cell *matCellDef="let row">
+                      {{ row.createdAt ? (row.createdAt | date:'dd/MM/yyyy') : '—' }}
+                    </td>
+                  </ng-container>
+
+                  <!-- CONDUCTOR -->
+                  <ng-container matColumnDef="conductor">
+                    <th mat-header-cell *matHeaderCellDef>Conductor</th>
+                    <td mat-cell *matCellDef="let row">{{ nombreConductor(row) }}</td>
+                  </ng-container>
+
+                  <!-- TIPO -->
+                  <ng-container matColumnDef="tipo">
+                    <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                    <td mat-cell *matCellDef="let row">{{ labelTipo(row.tipo) }}</td>
+                  </ng-container>
+
+                  <!-- GRAVEDAD -->
+                  <ng-container matColumnDef="gravedad">
+                    <th mat-header-cell *matHeaderCellDef>Gravedad</th>
+                    <td mat-cell *matCellDef="let row">
+                      <span class="chip" [ngClass]="claseGravedad(row.gravedad)">
+                        {{ labelGravedad(row.gravedad) }}
+                      </span>
+                    </td>
+                  </ng-container>
+
+                  <!-- ESTADO -->
+                  <ng-container matColumnDef="estado">
+                    <th mat-header-cell *matHeaderCellDef>Estado</th>
+                    <td mat-cell *matCellDef="let row">
+                      <span class="chip" [ngClass]="claseEstado(row.estado)">
+                        {{ labelEstado(row.estado) }}
+                      </span>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="columnas; sticky: true"></tr>
+                  <tr mat-row *matRowDef="let row; columns: columnas;"
+                      class="clickable-row"
+                      (click)="onClickFila(row)"></tr>
+                </table>
+              </div>
+            </ng-template>
+          </mat-card-content>
+        </mat-card>
+
+      </mat-drawer-content>
+    </mat-drawer-container>
+
+  </ng-container>
+</div>

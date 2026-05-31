@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { map, switchMap } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -52,6 +52,8 @@ export class ReporteIncidenteComponent implements OnInit, OnDestroy {
   isLoadingTurno = true;
   isSubmitting = false;
   errorTurno: string | null = null;
+  coordenadasActuales: { lat: number; lng: number } | null = null;
+  gpsEstado: 'buscando' | 'obtenido' | 'no-disponible' = 'buscando';
 
   readonly MAX_FOTOS = 5;
   readonly MAX_DESCRIPCION = 500;
@@ -96,10 +98,35 @@ export class ReporteIncidenteComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeForm();
     this.cargarTurnoActivo();
+    this.capturarCoordenadas();
   }
 
   ngOnDestroy(): void {
     this.subs.forEach(s => s.unsubscribe());
+  }
+
+  private capturarCoordenadas(): void {
+    if (!('geolocation' in navigator)) {
+      this.gpsEstado = 'no-disponible';
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.coordenadasActuales = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        this.gpsEstado = 'obtenido';
+      },
+      () => { this.gpsEstado = 'no-disponible'; },
+      { timeout: 10000 }
+    );
+  }
+
+  private archivoADataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   private initializeForm(): void {
@@ -229,7 +256,7 @@ export class ReporteIncidenteComponent implements OnInit, OnDestroy {
     }
   }
 
-  private enviarReporte(): void {
+  private async enviarReporte(): Promise<void> {
     this.isSubmitting = true;
     const { tipo, gravedad, descripcion } = this.form.value;
 
@@ -241,21 +268,34 @@ export class ReporteIncidenteComponent implements OnInit, OnDestroy {
       estado: 'PENDIENTE'
     };
 
-    if (this.personaId) {
-      dto.reportadoPorId = this.personaId;
+    if (this.personaId) dto.reportadoPorId = this.personaId;
+    if (this.coordenadasActuales) {
+      dto.latitud  = parseFloat(this.coordenadasActuales.lat.toFixed(7));
+      dto.longitud = parseFloat(this.coordenadasActuales.lng.toFixed(7));
     }
 
-    const sub = this.turnoService.crearIncidente(dto).subscribe({
-      next: () => {
-        this.toast.success('Incidente reportado correctamente. El equipo de supervisión ha sido notificado.');
-        this.router.navigate(['/conductor/dashboard']);
-      },
-      error: () => {
-        this.isSubmitting = false;
-      }
-    });
+    try {
+      const incidente = await firstValueFrom(this.turnoService.crearIncidente(dto));
 
-    this.subs.push(sub);
+      if (this.fotos.length > 0) {
+        const subidas = this.fotos.map(async (foto) => {
+          const url = await this.archivoADataUrl(foto.file);
+          return firstValueFrom(this.turnoService.crearFoto({ incidenteId: incidente.id, url }));
+        });
+        const resultados = await Promise.allSettled(subidas);
+        const fallidas = resultados.filter(r => r.status === 'rejected').length;
+        if (fallidas > 0) {
+          this.toast.warning(`Incidente registrado, pero ${fallidas} foto(s) no pudieron guardarse.`);
+          this.router.navigate(['/conductor/dashboard']);
+          return;
+        }
+      }
+
+      this.toast.success('Incidente reportado correctamente. El equipo de supervisión ha sido notificado.');
+      this.router.navigate(['/conductor/dashboard']);
+    } catch {
+      this.isSubmitting = false;
+    }
   }
 
   onCancelar(): void {

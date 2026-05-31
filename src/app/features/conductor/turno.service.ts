@@ -119,4 +119,8 @@ export class TurnoService {
   crearIncidente(dto: CreateIncidenteDto): Observable<Incidente> {
     return this.api.post<Incidente>(`${this.base}/incidente`, dto);
   }
+
+  crearFoto(dto: { incidenteId: number; url: string }): Observable<any> {
+    return this.api.post(`${this.base}/foto`, dto);
+  }
 }

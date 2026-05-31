@@ -54,6 +54,20 @@
           <mat-icon>lock_outline</mat-icon>
           Bus y turno obtenidos automáticamente de tu sesión activa
         </p>
+
+        <!-- Estado GPS -->
+        <div class="gps-estado" [class]="'gps-' + gpsEstado">
+          <mat-progress-spinner *ngIf="gpsEstado === 'buscando'" diameter="14" mode="indeterminate" />
+          <mat-icon *ngIf="gpsEstado === 'obtenido'">gps_fixed</mat-icon>
+          <mat-icon *ngIf="gpsEstado === 'no-disponible'">gps_off</mat-icon>
+          <span *ngIf="gpsEstado === 'buscando'">Obteniendo ubicación GPS...</span>
+          <span *ngIf="gpsEstado === 'obtenido'">
+            Ubicación capturada —
+            {{ coordenadasActuales?.lat | number:'1.4-4' }},
+            {{ coordenadasActuales?.lng | number:'1.4-4' }}
+          </span>
+          <span *ngIf="gpsEstado === 'no-disponible'">GPS no disponible — el incidente se registrará sin coordenadas</span>
+        </div>
       </ng-container>
 
       <!-- Sin turno activo -->

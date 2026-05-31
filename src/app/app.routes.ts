@@ -60,12 +60,12 @@
     {
       path: 'conductor',
       canActivate: [authGuard, roleGuard],
-      data: { roles: ['CONDUCTOR', 'ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA', 'ADMIN'] },
+      data: { roles: ['CONDUCTOR', 'ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'] },
       children: [
         {
           path: 'dashboard',
           loadComponent: () => import('./features/conductor/dashboard/dashboard-conductor.component').then(m => m.DashboardConductorComponent),
-          data: { roles: ['CONDUCTOR', 'ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA', 'ADMIN'] }
+          data: { roles: ['CONDUCTOR', 'ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'] }
         },
         {
           path: 'incidente/nuevo',
@@ -79,7 +79,7 @@
       path: 'admin',
       loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES),
       canActivate: [authGuard, roleGuard],
-      data: { roles: ['ADMINISTRADOR_SISTEMA', 'ADMINISTRADOR_EMPRESA', 'ADMIN'] }
+      data: { roles: ['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'] }
     },
     {
       path: 'test',

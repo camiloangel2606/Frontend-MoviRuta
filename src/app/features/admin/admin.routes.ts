@@ -1,8 +1,9 @@
 import { Routes } from '@angular/router';
+import { authGuard } from '../../core/guards/auth.guard';
 import { roleGuard } from '../../core/guards/role.guard';
 
-const ADMIN_EMPRESA_ROLES = ['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN'];
-const ADMIN_SISTEMA_ROLES = ['ADMINISTRADOR_SISTEMA', 'ADMIN'];
+const ADMIN_EMPRESA_ROLES = ['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'];
+const ADMIN_SISTEMA_ROLES = ['ADMIN'];
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -17,6 +18,13 @@ export const ADMIN_ROUTES: Routes = [
       .then(m => m.ProximamenteComponent),
     canActivate: [roleGuard],
     data: { titulo: 'Flota de Buses', roles: ADMIN_EMPRESA_ROLES }
+  },
+  {
+    path: 'buses/:id/incidentes',
+    loadComponent: () => import('./components/incidentes-bus/incidentes-bus.component')
+      .then(m => m.IncidentesBusComponent),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ADMIN_EMPRESA_ROLES }
   },
   {
     path: 'paraderos',
@@ -55,69 +63,69 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: 'reportes/incidentes',
-    loadComponent: () => import('../../shared/components/proximamente/proximamente.component')
-      .then(m => m.ProximamenteComponent),
-    canActivate: [roleGuard],
-    data: { titulo: 'Reporte de Incidentes', roles: ADMIN_EMPRESA_ROLES }
+    loadComponent: () => import('./components/incidentes-bus/incidentes-bus.component')
+      .then(m => m.IncidentesBusComponent),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ADMIN_EMPRESA_ROLES }
   },
   {
     path: 'roles',
     loadComponent: () => import('./components/roles/role-list/role-list.component')
       .then(m => m.RoleListComponent),
-    data: { roles: ['ADMINISTRADOR_SISTEMA', 'ADMIN'] }
+    data: { roles: ['ADMIN'] }
   },
   {
     path: 'roles/new',
     loadComponent: () => import('./components/roles/role-form/role-form.component')
       .then(m => m.RoleFormComponent),
-    data: { roles: ['ADMINISTRADOR_SISTEMA', 'ADMIN'] }
+    data: { roles: ['ADMIN'] }
   },
   {
     path: 'roles/edit/:id',
     loadComponent: () => import('./components/roles/role-form/role-form.component')
       .then(m => m.RoleFormComponent),
-    data: { roles: ['ADMINISTRADOR_SISTEMA', 'ADMIN'] }
+    data: { roles: ['ADMIN'] }
   },
   {
     path: 'users',
     loadComponent: () => import('./components/users/user-list/user-list.component')
       .then(m => m.UserListComponent),
-    data: { roles: ['ADMINISTRADOR_SISTEMA', 'ADMIN'] }
+    data: { roles: ['ADMIN'] }
   },
   {
     path: 'user-roles/:userId',
     loadComponent: () => import('./components/user-roles/user-role-manager/user-role-manager.component')
       .then(m => m.UserRoleManagerComponent),
-    data: { roles: ['ADMINISTRADOR_SISTEMA', 'ADMIN'] }
+    data: { roles: ['ADMIN'] }
   },
   {
     path: 'permissions',
     loadComponent: () => import('./components/permissions/permission-list/permission-list.component')
       .then(m => m.PermissionListComponent),
-    data: { roles: ['ADMINISTRADOR_SISTEMA', 'ADMIN'] }
+    data: { roles: ['ADMIN'] }
   },
   {
     path: 'permissions/new',
     loadComponent: () => import('./components/permissions/permission-form/permission-form.component')
       .then(m => m.PermissionFormComponent),
-    data: { roles: ['ADMINISTRADOR_SISTEMA', 'ADMIN'] }
+    data: { roles: ['ADMIN'] }
   },
   {
     path: 'permissions/edit/:id',
     loadComponent: () => import('./components/permissions/permission-form/permission-form.component')
       .then(m => m.PermissionFormComponent),
-    data: { roles: ['ADMINISTRADOR_SISTEMA', 'ADMIN'] }
+    data: { roles: ['ADMIN'] }
   },
   {
     path: 'role-permissions',
     loadComponent: () => import('./components/role-permissions/role-permission-manager/role-permission-manager.component')
       .then(m => m.RolePermissionManagerComponent),
-    data: { roles: ['ADMINISTRADOR_SISTEMA', 'ADMIN'] }
+    data: { roles: ['ADMIN'] }
   },
   {
     path: 'sessions',
     loadComponent: () => import('./session-list.component')
       .then(m => m.SessionListComponent),
-    data: { roles: ['ADMINISTRADOR_SISTEMA', 'ADMIN'] }
+    data: { roles: ['ADMIN'] }
   }
 ];

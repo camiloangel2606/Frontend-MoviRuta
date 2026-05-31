@@ -78,7 +78,7 @@ export class AppComponent implements OnInit, OnDestroy {
     },
     {
       label: 'Administración',
-      roles: ['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN'],
+      roles: ['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'],
       items: [
         { label: 'Flota de Buses', icon: 'directions_bus', route: '/admin/buses' },
         { label: 'Paraderos', icon: 'place', route: '/admin/paraderos' },
@@ -88,7 +88,7 @@ export class AppComponent implements OnInit, OnDestroy {
     },
     {
       label: 'Reportes',
-      roles: ['ADMINISTRADOR_EMPRESA', 'ADMINISTRADOR_SISTEMA', 'ADMIN'],
+      roles: ['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'],
       items: [
         { label: 'Ingresos', icon: 'payments', route: '/admin/reportes/ingresos' },
         { label: 'Demografía', icon: 'people', route: '/admin/reportes/demografia' },
@@ -97,7 +97,7 @@ export class AppComponent implements OnInit, OnDestroy {
     },
     {
       label: 'Sistema',
-      roles: ['ADMINISTRADOR_SISTEMA', 'ADMIN'],
+      roles: ['ADMIN'],
       items: [
         { label: 'Usuarios', icon: 'groups', route: '/admin/users' },
         { label: 'Roles', icon: 'verified_user', route: '/admin/roles' },
