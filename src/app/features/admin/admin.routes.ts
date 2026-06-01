@@ -28,10 +28,10 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: 'paraderos',
-    loadComponent: () => import('../../shared/components/proximamente/proximamente.component')
-      .then(m => m.ProximamenteComponent),
-    canActivate: [roleGuard],
-    data: { titulo: 'Paraderos', roles: ADMIN_EMPRESA_ROLES }
+    loadComponent: () => import('./components/gestion-paraderos/gestion-paraderos.component')
+      .then(m => m.GestionParaderosComponent),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['ADMIN', 'ADMIN_EMPRESA'] }
   },
   {
     path: 'rutas',

@@ -1,0 +1,80 @@
+<h2 mat-dialog-title>Nuevo Paradero</h2>
+
+<mat-dialog-content class="dialog-content">
+  <div class="dialog-layout">
+
+    <!-- Panel izquierdo: formulario -->
+    <div class="form-panel">
+      <form [formGroup]="form">
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nombre del paradero</mat-label>
+          <input matInput formControlName="nombre" placeholder="Ej: Terminal del Norte">
+          @if (nombre?.hasError('required') && nombre?.touched) {
+            <mat-error>El nombre es requerido</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Tipo</mat-label>
+          <mat-select formControlName="tipo">
+            @for (t of tipos; track t) {
+              <mat-option [value]="t">{{ t }}</mat-option>
+            }
+          </mat-select>
+          @if (tipo?.hasError('required') && tipo?.touched) {
+            <mat-error>El tipo es requerido</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="coords-row">
+          <mat-form-field appearance="outline" class="coord-field">
+            <mat-label>Latitud</mat-label>
+            <input matInput formControlName="latitud">
+            <mat-icon matSuffix>my_location</mat-icon>
+            @if (!coordenadasSeleccionadas) {
+              <mat-hint>Haga clic en el mapa</mat-hint>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="coord-field">
+            <mat-label>Longitud</mat-label>
+            <input matInput formControlName="longitud">
+          </mat-form-field>
+        </div>
+
+      </form>
+
+      <p class="mapa-instruccion">
+        <mat-icon class="instruccion-icon">touch_app</mat-icon>
+        Haga clic en el mapa para colocar el marcador
+      </p>
+    </div>
+
+    <!-- Panel derecho: mapa Leaflet -->
+    <div class="mapa-panel">
+      <p class="section-label">Ubicación en el mapa</p>
+      <div #mapaDiv class="mapa-container"></div>
+    </div>
+
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()" [disabled]="isGuardando" type="button">
+    Cancelar
+  </button>
+  <button mat-flat-button color="primary"
+          (click)="guardar()"
+          [disabled]="isGuardando"
+          type="button">
+    @if (isGuardando) {
+      <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+      Guardando...
+    } @else {
+      <ng-container>
+        <mat-icon>save</mat-icon>
+        Guardar Paradero
+      </ng-container>
+    }
+  </button>
+</mat-dialog-actions>

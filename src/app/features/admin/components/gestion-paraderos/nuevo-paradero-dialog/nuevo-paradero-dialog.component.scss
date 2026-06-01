@@ -1,0 +1,90 @@
+:host {
+  display: block;
+}
+
+.dialog-content {
+  padding: 0 24px 8px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.dialog-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  min-height: 400px;
+}
+
+.form-panel {
+  display: flex;
+  flex-direction: column;
+  padding-right: 4px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.coords-row {
+  display: flex;
+  gap: 12px;
+}
+
+.coord-field {
+  flex: 1;
+}
+
+.mapa-instruccion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--mat-sys-on-surface-variant, #666);
+  margin-top: 12px;
+}
+
+.instruccion-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #1775ff;
+}
+
+.mapa-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 380px;
+}
+
+.section-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface, #333);
+  margin: 0 0 10px;
+}
+
+.mapa-container {
+  flex: 1;
+  min-height: 340px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  cursor: crosshair;
+}
+
+.btn-spinner {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+mat-dialog-actions {
+  padding: 8px 24px 16px;
+  gap: 8px;
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}

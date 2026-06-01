@@ -302,7 +302,7 @@ const ADMIN_SISTEMA_ROLES = ['ADMIN'];                                  // solo 
 | `/admin/sessions` | `SessionListComponent` | Ver y cerrar sesiones activas de todos los usuarios |
 | `/admin/buses` | `ProximamenteComponent` | Stub — Flota de Buses (Empresa + Sistema) |
 | `/admin/paraderos` | `ProximamenteComponent` | Stub — Paraderos (Empresa + Sistema) |
-| `/admin/rutas` | `ProximamenteComponent` | Stub — Rutas (Empresa + Sistema) |
+| `/admin/rutas` | `GestionRutasComponent` | **HU-2009.** Tabla de rutas con código, tarifa y conteo de paraderos. Botón "Nueva Ruta" → dialog con form reactivo, autocomplete de paraderos, reordenamiento ↑↓, campos distancia/tiempo y mapa Leaflet en tiempo real. `POST /ruta/con-paraderos`. Roles: `ADMIN`, `ADMIN_EMPRESA`. |
 | `/admin/programaciones` | `ProximamenteComponent` | Stub — Programaciones (Empresa + Sistema) |
 | `/admin/reportes/ingresos` | `ProximamenteComponent` | Stub — Reporte de Ingresos |
 | `/admin/reportes/demografia` | `ProximamenteComponent` | Stub — Reporte Demográfico |
@@ -490,6 +490,37 @@ export class EntidadService {
 - El grupo `movilidad` en `app.routes.ts` tiene `canActivate: [authGuard]` en el padre; los hijos heredan esa protección sin repetirla.
 - El `roleGuard` lee `route.data?.['roles']` (array de strings). **El chequeo es case-sensitive**: si el rol en la base de datos es `'CIUDADANO'`, la ruta debe declarar `data: { roles: ['CIUDADANO'] }`, no `'Ciudadano'`. Cuando una ruta aplica para cualquier usuario autenticado sin importar rol, usar solo `authGuard` y dejar la autorización al API.
 
+### Layout del shell — navbar fijo y offset de contenido
+
+El navbar (`.topbar` en `navbar.component.scss`) es `position: fixed`, `height: 84px`, `z-index: 1200`. Flota sobre todo el contenido.
+
+**Corrección global aplicada en `app.component.scss`:**
+```scss
+.app-content-inner {
+  min-height: 100vh;
+  padding-top: 84px;   // ← empuja el contenido de TODAS las páginas debajo del navbar
+}
+```
+> El `.app-sidenav` ya tenía `padding-top: 88px` (correcto desde antes).
+
+**Regla para nuevas páginas:** los componentes de página NO necesitan agregar su propio `padding-top` para el navbar — `.app-content-inner` ya lo absorbe. Solo usar el `padding` propio de la página (ej. `padding: 24px`).
+
+**MatDialog con navbar fijo:** al abrir un dialog desde una página, usar siempre:
+```typescript
+this.dialog.open(MiDialogComponent, {
+  width: '...',
+  maxWidth: '96vw',
+  maxHeight: 'calc(100vh - 100px)',  // 100px = 84px navbar + 16px margen inferior
+  position: { top: '92px' },         // 84px navbar + 8px margen visual
+  disableClose: true,
+});
+```
+Sin `position.top`, el dialog se centra en el viewport y su mitad superior queda tapada por el navbar.
+
+**CSS interno de un MatDialog:** el `<mat-dialog-content>` nunca debe tener `overflow: hidden` — usar `overflow-y: auto` para que el formulario pueda hacer scroll. Las alturas internas deben usar `calc(100vh - Xpx)` en lugar de valores `vh` absolutos que no consideran el navbar ni los action-buttons.
+
+---
+
 ### Leaflet en componentes con `*ngIf`
 - El `div` del mapa **no puede existir en el DOM** hasta que `*ngIf` se resuelva a `true`.
 - Patrón correcto: usar `@ViewChild('ref') set ref(el)` — el setter se dispara automáticamente cuando el elemento aparece en el DOM y se llama `initMap()` ahí dentro con `NgZone.runOutsideAngular()`.
@@ -546,6 +577,23 @@ export class EntidadService {
 - **Errores resueltos:**
   - 400 en `POST /incidente` por coordenadas con >7 decimales → `parseFloat(val.toFixed(7))`.
   - `GET /incidente` devuelve `{ data: [], total, page, limit }` (paginado), no array plano → usar `normalizar<T>()` que extrae `.data` si existe.
+
+### Sesión — HU-2009 (GestionRutasComponent)
+- **Creado:** `features/admin/components/gestion-rutas/` — `GestionRutasComponent` + `NuevaRutaDialogComponent` (subcarpeta `nueva-ruta-dialog/`).
+- **Creado:** `features/admin/services/ruta.service.ts` — interfaces `Ruta`, `Paradero`, `ParaderoEnRuta`, `CrearRutaDto`. Métodos: `getRutas()`, `getParaderos()`, `getParaderosDeRuta(id)`, `crearRutaConParaderos(dto)`.
+- **Ruta:** `/admin/rutas` en `admin.routes.ts` — `canActivate: [authGuard, roleGuard]`, `data: { roles: ['ADMIN', 'ADMIN_EMPRESA'] }`. Reemplaza el stub `ProximamenteComponent`.
+- **Sidebar:** "Rutas" → `/admin/rutas` ya existía en el grupo Administración (`['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR']`).
+- **Tabla:** columnas `nombre`, `codigo` (`RUT-${id.padStart(4,'0')}`), `tarifa`, `paraderos` (conteo via `forkJoin` de `GET /ruta/:id/paraderos`). Stats: total rutas y tarifa promedio.
+- **Dialog "Nueva Ruta":** layout dos paneles (`grid-template-columns: 1fr 1fr`). Izquierda: `FormGroup` (nombre required, descripcion, tarifa required min:0) + `MatAutocomplete` con `debounceTime(300)` filtrando `GET /paradero` client-side + `FormArray` de paraderos con ↑↓✕ + campos distancia/tiempo por paradero. Derecha: mapa Leaflet con marcadores numerados (`L.divIcon`) y `L.polyline` actualizados en tiempo real.
+- **Validaciones:** mínimo 3 paraderos antes de guardar; duplicados bloqueados en `onParaderoSelected`.
+- **Guardado:** `POST /ruta/con-paraderos` con `{ nombre, descripcion?, tarifa, paraderos: [{paraderoId, orden, distanciaDesdeAnterior?, tiempoEstimadoDesdeAnterior?}] }`. Al cerrar el dialog: `toast.success("Ruta X creada. Código: RUT-XXXX")`.
+- **Leaflet en dialog:** inicialización con `ngAfterViewInit` + `setTimeout(400)` (espera animación de apertura). `NgZone.runOutsideAngular()` en toda operación Leaflet. Fix de iconos al nivel de módulo.
+- **Gotcha GET /paradero:** no acepta query params (`?nombre=`). Siempre traer todo y filtrar client-side.
+- **Errores resueltos:**
+  - Navbar fijo (84px) cubría el header de la página → `padding-top: 84px` en `.app-content-inner` de `app.component.scss`.
+  - Dialog solapaba el navbar → `position: { top: '92px' }` + `maxHeight: 'calc(100vh - 100px)'` en la config de apertura.
+  - `overflow: hidden` en `mat-dialog-content` impedía scroll del formulario → cambiado a `overflow-y: auto`.
+  - Alturas fijas en dialog SCSS reemplazadas por `calc(100vh - Xpx)` para adaptarse al viewport real.
 
 ### Sesión — HU-2008 (IncidentesBusComponent)
 - **Creado:** `features/admin/components/incidentes-bus/` + `services/incidente-bus.service.ts`.
