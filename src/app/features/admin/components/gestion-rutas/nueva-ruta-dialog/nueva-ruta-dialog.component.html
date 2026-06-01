@@ -1,0 +1,166 @@
+<h2 mat-dialog-title>Nueva Ruta</h2>
+
+<mat-dialog-content class="dialog-content">
+  <div class="dialog-layout">
+
+    <!-- Panel izquierdo: formulario + paraderos -->
+    <div class="form-panel">
+
+      <form [formGroup]="form">
+        <!-- Nombre -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nombre de la ruta</mat-label>
+          <input matInput formControlName="nombre" placeholder="Ej: Ruta Norte – Centro">
+          @if (form.get('nombre')?.hasError('required') && form.get('nombre')?.touched) {
+            <mat-error>El nombre es requerido</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Descripción -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Descripción</mat-label>
+          <textarea matInput formControlName="descripcion" rows="2"
+            placeholder="Descripción opcional de la ruta"></textarea>
+        </mat-form-field>
+
+        <!-- Tarifa -->
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Tarifa (COP)</mat-label>
+          <input matInput type="number" formControlName="tarifa" min="0" placeholder="0">
+          @if (form.get('tarifa')?.hasError('required') && form.get('tarifa')?.touched) {
+            <mat-error>La tarifa es requerida</mat-error>
+          }
+          @if (form.get('tarifa')?.hasError('min')) {
+            <mat-error>La tarifa no puede ser negativa</mat-error>
+          }
+        </mat-form-field>
+      </form>
+
+      <mat-divider class="section-divider"></mat-divider>
+
+      <!-- Buscador de paraderos -->
+      <p class="section-label">Paraderos de la ruta</p>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Buscar y agregar paradero</mat-label>
+        <input matInput
+               [formControl]="busquedaCtrl"
+               [matAutocomplete]="auto"
+               placeholder="Escriba el nombre del paradero...">
+        <mat-icon matSuffix>search</mat-icon>
+        <mat-autocomplete #auto="matAutocomplete"
+                          [displayWith]="displayFn"
+                          (optionSelected)="onParaderoSelected($event)">
+          @if (isCargandoParaderos) {
+            <mat-option disabled>
+              <mat-spinner diameter="20"></mat-spinner>
+              Cargando paraderos...
+            </mat-option>
+          } @else if (paraderosFiltrados.length === 0) {
+            <mat-option disabled>Sin resultados</mat-option>
+          } @else {
+            @for (p of paraderosFiltrados; track p.id) {
+              <mat-option [value]="p">
+                <span class="option-nombre">{{ p.nombre }}</span>
+                <span class="option-tipo">{{ p.tipo }}</span>
+              </mat-option>
+            }
+          }
+        </mat-autocomplete>
+      </mat-form-field>
+
+      <!-- Validación mínimo 3 paraderos -->
+      @if (erroresParaderos) {
+        <p class="hint-error">{{ erroresParaderos }}</p>
+      }
+      @if (paraderosFormArray.length === 0) {
+        <p class="hint-vacio">Agregue al menos 3 paraderos para definir la ruta.</p>
+      }
+
+      <!-- Lista de paraderos seleccionados -->
+      @if (paraderosFormArray.length > 0) {
+        <div class="paraderos-lista">
+          <form [formGroup]="form">
+            <div formArrayName="paraderos">
+              @for (ctrl of paraderosFormArray.controls; track $index; let i = $index) {
+                <div class="paradero-item" [formGroupName]="i">
+                  <div class="paradero-header">
+                    <span class="paradero-orden">{{ i + 1 }}</span>
+                    <span class="paradero-nombre">{{ ctrl.get('nombre')?.value }}</span>
+                    <div class="paradero-acciones">
+                      <button mat-icon-button
+                              [disabled]="i === 0"
+                              (click)="moverArriba(i)"
+                              matTooltip="Mover arriba"
+                              type="button">
+                        <mat-icon>keyboard_arrow_up</mat-icon>
+                      </button>
+                      <button mat-icon-button
+                              [disabled]="i === paraderosFormArray.length - 1"
+                              (click)="moverAbajo(i)"
+                              matTooltip="Mover abajo"
+                              type="button">
+                        <mat-icon>keyboard_arrow_down</mat-icon>
+                      </button>
+                      <button mat-icon-button
+                              color="warn"
+                              (click)="eliminarParadero(i)"
+                              matTooltip="Eliminar"
+                              type="button">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                  @if (i > 0) {
+                    <div class="paradero-distancias">
+                      <mat-form-field appearance="outline" class="campo-distancia">
+                        <mat-label>Distancia desde anterior (m)</mat-label>
+                        <input matInput type="number" formControlName="distanciaDesdeAnterior"
+                               min="0" placeholder="0">
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="campo-tiempo">
+                        <mat-label>Tiempo estimado (min)</mat-label>
+                        <input matInput type="number" formControlName="tiempoEstimadoDesdeAnterior"
+                               min="0" placeholder="0">
+                      </mat-form-field>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </form>
+        </div>
+      }
+    </div>
+
+    <!-- Panel derecho: mapa Leaflet -->
+    <div class="mapa-panel">
+      <p class="section-label">Vista previa del recorrido</p>
+      <div #mapaDiv class="mapa-container"></div>
+      @if (paraderosFormArray.length < 2) {
+        <p class="mapa-hint">El mapa mostrará el recorrido al agregar 2 o más paraderos.</p>
+      }
+    </div>
+
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()" [disabled]="isGuardando" type="button">
+    Cancelar
+  </button>
+  <button mat-flat-button color="primary"
+          (click)="guardar()"
+          [disabled]="isGuardando"
+          type="button">
+    @if (isGuardando) {
+      <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+      Guardando...
+    } @else {
+      <ng-container>
+        <mat-icon>save</mat-icon>
+        Guardar Ruta
+      </ng-container>
+    }
+  </button>
+</mat-dialog-actions>

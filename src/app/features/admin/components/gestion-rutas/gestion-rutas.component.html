@@ -1,0 +1,97 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-info">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">route</mat-icon>
+        Gestión de Rutas
+      </h1>
+      <p class="page-subtitle">Administre las rutas de transporte y sus paraderos.</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="abrirDialogoNuevaRuta()">
+      <mat-icon>add</mat-icon>
+      Nueva Ruta
+    </button>
+  </div>
+
+  @if (isLoading) {
+    <div class="skeleton-grid">
+      <app-skeleton type="stat"></app-skeleton>
+      <app-skeleton type="stat"></app-skeleton>
+      <app-skeleton type="stat"></app-skeleton>
+    </div>
+    <mat-card class="table-card">
+      <app-skeleton type="text" [lines]="6"></app-skeleton>
+    </mat-card>
+  } @else if (rutas.length === 0) {
+    <app-empty-state
+      icon="route"
+      title="Sin rutas registradas"
+      subtitle="Cree la primera ruta usando el botón 'Nueva Ruta'.">
+    </app-empty-state>
+  } @else {
+    <!-- Stats -->
+    <div class="stats-row">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-value">{{ rutas.length }}</div>
+          <div class="stat-label">Rutas totales</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-value">
+            {{ formatTarifa(promTarifa) }}
+          </div>
+          <div class="stat-label">Tarifa promedio</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Tabla -->
+    <mat-card class="table-card">
+      <mat-card-content>
+        <table mat-table [dataSource]="rutas" class="rutas-table">
+
+          <!-- Nombre -->
+          <ng-container matColumnDef="nombre">
+            <th mat-header-cell *matHeaderCellDef>Nombre</th>
+            <td mat-cell *matCellDef="let ruta">
+              <span class="ruta-nombre">{{ ruta.nombre }}</span>
+              @if (ruta.descripcion) {
+                <span class="ruta-desc">{{ ruta.descripcion }}</span>
+              }
+            </td>
+          </ng-container>
+
+          <!-- Código -->
+          <ng-container matColumnDef="codigo">
+            <th mat-header-cell *matHeaderCellDef>Código</th>
+            <td mat-cell *matCellDef="let ruta">
+              <code class="codigo-chip">{{ formatCodigo(ruta.id) }}</code>
+            </td>
+          </ng-container>
+
+          <!-- Tarifa -->
+          <ng-container matColumnDef="tarifa">
+            <th mat-header-cell *matHeaderCellDef>Tarifa</th>
+            <td mat-cell *matCellDef="let ruta">{{ formatTarifa(ruta.tarifa) }}</td>
+          </ng-container>
+
+          <!-- Paraderos -->
+          <ng-container matColumnDef="paraderos">
+            <th mat-header-cell *matHeaderCellDef>Paraderos</th>
+            <td mat-cell *matCellDef="let ruta">
+              <span class="paradero-count">
+                <mat-icon class="count-icon">place</mat-icon>
+                {{ conteoParaderos(ruta.id) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+          <tr mat-row *matRowDef="let ruta; columns: columnas;" class="tabla-fila"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>
