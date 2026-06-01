@@ -1,0 +1,210 @@
+.page-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+}
+
+.header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--mat-sys-on-surface, #1a1a1a);
+}
+
+.title-icon {
+  color: #1775ff;
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: var(--mat-sys-on-surface-variant, #666);
+  margin: 0;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stats-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 160px;
+
+  mat-card-content {
+    padding: 16px 20px;
+  }
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1775ff;
+  line-height: 1.2;
+
+  &.stat-programado { color: #1775ff; }
+  &.stat-en-curso   { color: #2e7d32; }
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--mat-sys-on-surface-variant, #666);
+  margin-top: 4px;
+}
+
+.filtro-card {
+  margin-bottom: 16px;
+
+  mat-card-content {
+    padding: 12px 16px;
+  }
+}
+
+.filtro-field {
+  width: 100%;
+  max-width: 320px;
+}
+
+.table-card {
+  mat-card-content {
+    padding: 0;
+  }
+}
+
+.prog-table {
+  width: 100%;
+
+  th {
+    font-weight: 600;
+    font-size: 13px;
+  }
+}
+
+.nombre-ruta {
+  display: block;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.bus-placa {
+  display: block;
+  font-weight: 600;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.bus-modelo {
+  display: block;
+  font-size: 11px;
+  color: var(--mat-sys-on-surface-variant, #888);
+}
+
+.fecha-chip,
+.hora-chip {
+  background: #f1f5ff;
+  color: #1a2e6b;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.estado-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.estado-programado {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.estado-en_curso {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.estado-finalizado {
+  background: #f5f5f5;
+  color: #616161;
+}
+
+.estado-cancelado {
+  background: #fce4ec;
+  color: #c62828;
+}
+
+.recurrencia-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.recurrencia-unica {
+  background: #fafafa;
+  color: #555;
+  border: 1px solid #e0e0e0;
+}
+
+.recurrencia-diaria {
+  background: #ede7f6;
+  color: #4527a0;
+}
+
+.recurrencia-lunes_a_viernes {
+  background: #e0f7fa;
+  color: #006064;
+}
+
+.recurrencia-fines_de_semana {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.tabla-fila {
+  &:hover {
+    background: rgba(23, 117, 255, 0.04);
+  }
+}

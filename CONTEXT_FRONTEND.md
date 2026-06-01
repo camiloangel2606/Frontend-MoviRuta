@@ -301,7 +301,7 @@ const ADMIN_SISTEMA_ROLES = ['ADMIN'];                                  // solo 
 | `/admin/role-permissions` | `RolePermissionManagerComponent` | Asignar permisos a roles |
 | `/admin/sessions` | `SessionListComponent` | Ver y cerrar sesiones activas de todos los usuarios |
 | `/admin/buses` | `ProximamenteComponent` | Stub — Flota de Buses (Empresa + Sistema) |
-| `/admin/paraderos` | `ProximamenteComponent` | Stub — Paraderos (Empresa + Sistema) |
+| `/admin/paraderos` | `GestionParaderosComponent` | **HU-2010.** Tabla de paraderos con buscador en tiempo real (filtra nombre y tipo con `valueChanges + debounceTime`). Columnas: nombre, código (`PAR-XXXX`), tipo (badge de color), latitud, longitud. Stats: total y terminales. Botón "Nuevo Paradero" → dialog dos paneles: formulario (nombre, tipo MatSelect, lat/lng readonly) + mapa Leaflet interactivo. Clic en mapa coloca/mueve un único marcador y hace `patchValue()` con coordenadas redondeadas a 7 decimales. `POST /paradero`. `ParaderoService` en `features/admin/services/`. Roles: `ADMIN`, `ADMIN_EMPRESA`. |
 | `/admin/rutas` | `GestionRutasComponent` | **HU-2009.** Tabla de rutas con código, tarifa y conteo de paraderos. Botón "Nueva Ruta" → dialog con form reactivo, autocomplete de paraderos, reordenamiento ↑↓, campos distancia/tiempo y mapa Leaflet en tiempo real. `POST /ruta/con-paraderos`. Roles: `ADMIN`, `ADMIN_EMPRESA`. |
 | `/admin/programaciones` | `ProximamenteComponent` | Stub — Programaciones (Empresa + Sistema) |
 | `/admin/reportes/ingresos` | `ProximamenteComponent` | Stub — Reporte de Ingresos |
@@ -603,3 +603,15 @@ Sin `position.top`, el dialog se centra en el viewport y su mitad superior queda
 - **Errores resueltos:**
   - Selector de `SkeletonLoaderComponent` es `app-skeleton`, no `app-skeleton-loader`.
   - Roles de ruta deben ser `ADMIN_EMPRESA_ROLES` — strings como `'Administrador Sistema'` no coinciden con los roles reales del backend.
+
+### Sesión — HU-2010 (GestionParaderosComponent)
+- **Creado:** `features/admin/components/gestion-paraderos/` — `GestionParaderosComponent` + `NuevoParaderoDialogComponent` (subcarpeta `nuevo-paradero-dialog/`).
+- **Creado:** `features/admin/services/paradero.service.ts` — re-exporta `Paradero` desde `ruta.service.ts`, añade `getParaderos()` y `crearParadero(dto: CrearParaderoDto)` → `POST /paradero`.
+- **Ruta:** `/admin/paraderos` en `admin.routes.ts` — `canActivate: [authGuard, roleGuard]`, `data: { roles: ['ADMIN', 'ADMIN_EMPRESA'] }`. Reemplaza el stub `ProximamenteComponent`.
+- **Sidebar:** "Paraderos" → `/admin/paraderos` ya existía en el grupo Administración (`['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR']`), sin cambios.
+- **Tabla:** columnas `nombre`, `codigo` (`PAR-${id.padStart(4,'0')}`), `tipo` (badge de color por valor: azul/verde/naranja), `latitud`, `longitud`. Stats: total paraderos y conteo de terminales.
+- **Buscador en tiempo real:** `FormControl` + `valueChanges` con `debounceTime(200)` filtrando `todosLosParaderos` por nombre y tipo sobre datos ya cargados (sin llamada extra al backend).
+- **Dialog "Nuevo Paradero":** layout dos paneles (`grid-template-columns: 1fr 1fr`). Izquierda: `FormGroup` (nombre required, tipo MatSelect PARADERO|ESTACION|TERMINAL required, latitud y longitud `disabled: true`). Derecha: mapa Leaflet.
+- **Mapa interactivo:** `mapa.on('click', ...)` registrado dentro de `runOutsideAngular`. Al hacer clic: si ya existe marcador → `marcador.setLatLng(...)` (solo uno a la vez); si no → `L.marker(...).addTo(mapa)`. Coordenadas redondeadas a 7 decimales con `parseFloat(val.toFixed(7))`. `ngZone.run(() => form.patchValue({ latitud, longitud }))` para disparar detección de cambios.
+- **Leaflet en dialog:** `ngAfterViewInit` + `setTimeout(400)`. Fix de iconos al nivel de módulo. `mapa.remove()` en `ngOnDestroy`.
+- **Guardado:** valida que haya coordenadas antes de enviar; si faltan → `toast.warning`. Al cerrar dialog: `toast.success("Paradero X creado. Código: PAR-XXXX")` en el componente padre.

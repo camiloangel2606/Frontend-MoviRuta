@@ -1,0 +1,154 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="title-icon">calendar_add_on</mat-icon>
+  Nueva Programación
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  @if (isCargando) {
+    <div class="cargando-center">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p class="cargando-texto">Cargando datos...</p>
+    </div>
+  } @else {
+    <form [formGroup]="form" class="prog-form">
+
+      <!-- Ruta -->
+      <mat-form-field appearance="outline" class="campo-full">
+        <mat-label>Ruta</mat-label>
+        <mat-select formControlName="rutaId">
+          @for (r of rutas; track r.id) {
+            <mat-option [value]="r.id">{{ r.nombre }}</mat-option>
+          }
+        </mat-select>
+        <mat-icon matSuffix>route</mat-icon>
+        @if (rutaIdCtrl.hasError('required') && rutaIdCtrl.touched) {
+          <mat-error>La ruta es obligatoria</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- Bus -->
+      <mat-form-field appearance="outline" class="campo-full">
+        <mat-label>Bus (solo operativos)</mat-label>
+        <mat-select formControlName="busId">
+          @for (b of buses; track b.id) {
+            <mat-option [value]="b.id">{{ b.placa }} — {{ b.modelo }}</mat-option>
+          }
+        </mat-select>
+        <mat-icon matSuffix>directions_bus</mat-icon>
+        @if (busIdCtrl.hasError('required') && busIdCtrl.touched) {
+          <mat-error>El bus es obligatorio</mat-error>
+        }
+        @if (busIdCtrl.hasError('conflicto')) {
+          <mat-error>Este bus ya tiene una programación en esa fecha y horario</mat-error>
+        }
+      </mat-form-field>
+
+      @if (verificandoBus) {
+        <div class="estado-check">
+          <mat-spinner diameter="14"></mat-spinner>
+          <span>Verificando disponibilidad del bus...</span>
+        </div>
+      }
+
+      <!-- Conductor -->
+      <mat-form-field appearance="outline" class="campo-full">
+        <mat-label>Conductor asignado</mat-label>
+        <mat-select formControlName="conductorId">
+          @for (c of conductores; track c.id) {
+            <mat-option [value]="c.id">{{ nombreConductor(c) }}</mat-option>
+          }
+        </mat-select>
+        <mat-icon matSuffix>person</mat-icon>
+        @if (conductorIdCtrl.hasError('required') && conductorIdCtrl.touched) {
+          <mat-error>El conductor es obligatorio</mat-error>
+        }
+        @if (conductorIdCtrl.hasError('conflicto')) {
+          <mat-error>Este conductor ya tiene una programación en esa fecha y horario</mat-error>
+        }
+      </mat-form-field>
+
+      @if (verificandoConductor) {
+        <div class="estado-check">
+          <mat-spinner diameter="14"></mat-spinner>
+          <span>Verificando disponibilidad del conductor...</span>
+        </div>
+      }
+
+      <mat-divider class="divisor"></mat-divider>
+
+      <!-- Fecha + Hora -->
+      <div class="campos-fila">
+        <mat-form-field appearance="outline" class="campo-mitad">
+          <mat-label>Fecha</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="fecha" readonly>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+          @if (fechaCtrl.hasError('required') && fechaCtrl.touched) {
+            <mat-error>La fecha es obligatoria</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="campo-mitad">
+          <mat-label>Hora de salida</mat-label>
+          <input matInput type="time" formControlName="horaSalida">
+          <mat-icon matSuffix>schedule</mat-icon>
+          @if (horaSalidaCtrl.hasError('required') && horaSalidaCtrl.touched) {
+            <mat-error>La hora de salida es obligatoria</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <!-- Tolerancia -->
+      <mat-form-field appearance="outline" class="campo-mitad">
+        <mat-label>Tolerancia (minutos)</mat-label>
+        <input matInput type="number" formControlName="toleranciaMinutos" min="0">
+        <mat-icon matSuffix>timer</mat-icon>
+        @if (toleranciaCtrl.invalid && toleranciaCtrl.touched) {
+          <mat-error>Mínimo 0 minutos</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-divider class="divisor"></mat-divider>
+
+      <!-- Toggle recurrencia -->
+      <div class="recurrencia-toggle">
+        <span class="toggle-label">¿Es recurrente?</span>
+        <mat-slide-toggle
+          [checked]="esRecurrente"
+          (change)="onToggleRecurrencia($event.checked)"
+          color="primary">
+        </mat-slide-toggle>
+      </div>
+
+      @if (esRecurrente) {
+        <div class="recurrencia-opciones">
+          <mat-radio-group formControlName="tipoRecurrencia" class="radio-group">
+            @for (op of opcionesRecurrencia; track op.value) {
+              <mat-radio-button [value]="op.value">{{ op.label }}</mat-radio-button>
+            }
+          </mat-radio-group>
+        </div>
+      }
+
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-button type="button" (click)="onCancelar()" [disabled]="isGuardando">
+    Cancelar
+  </button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    (click)="onGuardar()"
+    [disabled]="!puedeGuardar">
+    @if (isGuardando) {
+      <mat-spinner diameter="18" class="spinner-btn"></mat-spinner>
+    } @else {
+      <mat-icon>save</mat-icon>
+    }
+    Guardar
+  </button>
+</mat-dialog-actions>

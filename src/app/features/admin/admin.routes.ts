@@ -42,10 +42,10 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: 'programaciones',
-    loadComponent: () => import('../../shared/components/proximamente/proximamente.component')
-      .then(m => m.ProximamenteComponent),
-    canActivate: [roleGuard],
-    data: { titulo: 'Programaciones', roles: ADMIN_EMPRESA_ROLES }
+    loadComponent: () => import('./components/programaciones/programaciones.component')
+      .then(m => m.ProgramacionesComponent),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['ADMIN', 'ADMIN_EMPRESA'] }
   },
   {
     path: 'reportes/ingresos',

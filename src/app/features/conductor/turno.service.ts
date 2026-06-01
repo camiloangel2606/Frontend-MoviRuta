@@ -104,8 +104,36 @@ export class TurnoService {
     return this.api.get<Programacion[]>(`${this.base}/programacion`);
   }
 
+  /** Programaciones del conductor para una fecha concreta usando los query params del DTO */
+  getProgramacionesConductorFecha(conductorId: number, fecha: string): Observable<Programacion[]> {
+    return this.api.get<Programacion[]>(
+      `${this.base}/programacion?conductorId=${conductorId}&fecha=${fecha}`,
+    );
+  }
+
+  actualizarEstadoProgramacion(programacionId: number, estado: string): Observable<any> {
+    return this.api.patch(`${this.base}/programacion/${programacionId}`, { estado });
+  }
+
+  getBuses(): Observable<Bus[]> {
+    return this.api.get<Bus[]>(`${this.base}/bus`);
+  }
+
+  crearTurno(dto: {
+    conductorId: number;
+    busId: number;
+    inicio: string;
+    observaciones?: string;
+  }): Observable<Turno> {
+    return this.api.post<Turno>(`${this.base}/turno`, dto);
+  }
+
   iniciarTurno(id: number, dto: { observaciones?: string }): Observable<Turno> {
     return this.api.post<Turno>(`${this.base}/turno/${id}/iniciar`, dto);
+  }
+
+  finalizarTurno(id: number): Observable<Turno> {
+    return this.api.post<Turno>(`${this.base}/turno/${id}/finalizar`, {});
   }
 
   getGps(): Observable<Gps[]> {
