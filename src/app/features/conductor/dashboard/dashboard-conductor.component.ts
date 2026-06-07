@@ -14,7 +14,6 @@ import { SkeletonLoaderComponent } from '../../../shared/components/loader/loade
 import { TurnoService, Turno, Programacion, Gps } from '../turno.service';
 import { IniciarTurnoDialogComponent } from './iniciar-turno-dialog/iniciar-turno-dialog.component';
 import { FinalizarTurnoDialogComponent } from './finalizar-turno-dialog/finalizar-turno-dialog.component';
-import { CrearTurnoDialogComponent } from './crear-turno-dialog/crear-turno-dialog.component';
 
 @Component({
   selector: 'app-dashboard-conductor',
@@ -37,6 +36,7 @@ export class DashboardConductorComponent implements OnInit, OnDestroy {
   programacion$ = new BehaviorSubject<Programacion | null>(null);
 
   isLoading = true;
+  isCreandoTurno = false;
   error: string | null = null;
   readonly fechaHoy = new Date();
 
@@ -79,7 +79,8 @@ export class DashboardConductorComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const hoy = this.fechaHoy.toISOString().split('T')[0];
+    const d = this.fechaHoy;
+    const hoy = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
     const sub = this.turnoService.getPersonaBySecurity(currentUser.id).pipe(
       switchMap(persona =>
@@ -166,10 +167,6 @@ export class DashboardConductorComponent implements OnInit, OnDestroy {
     return !this.turno && !this.programacion;
   }
 
-  get puedeCrear(): boolean {
-    return !this.turno || this.turno.estado?.toUpperCase() === 'FINALIZADO';
-  }
-
   get puedeIniciar(): boolean {
     return this.turno?.estado?.toUpperCase() === 'PROGRAMADO';
   }
@@ -201,47 +198,29 @@ export class DashboardConductorComponent implements OnInit, OnDestroy {
 
   // ─── Acciones ─────────────────────────────────────────────────────────────
 
-  abrirDialogoCrearTurno(): void {
-    if (this.conductorId === null) {
-      this.toast.warning('No se identificó tu perfil de conductor. Recarga la página.');
+  abrirDialogoIniciar(): void {
+    // Sin turno previo → crearlo silenciosamente desde la programación y luego abrir el diálogo
+    if (!this.turno && this.programacion && this.conductorId !== null) {
+      this.isCreandoTurno = true;
+      const sub = this.turnoService.crearTurno({
+        conductorId: this.conductorId,
+        busId:       this.programacion.bus.id,
+        inicio:      new Date().toISOString(),
+      }).subscribe({
+        next: (turnoCreado) => {
+          this.isCreandoTurno = false;
+          this.turno$.next(turnoCreado);
+          this.abrirDialogoIniciar(); // re-entrar con turno ya disponible
+        },
+        error: () => {
+          this.isCreandoTurno = false;
+          this.toast.warning('No se pudo registrar el turno. Intenta de nuevo.');
+        },
+      });
+      this.subs.push(sub);
       return;
     }
 
-    // Pre-fill fecha y hora desde la programacion si existe
-    let fechaSugerida: Date | undefined;
-    let horaSugerida: string | undefined;
-    if (this.programacion) {
-      const [y, m, d] = this.programacion.fecha.split('-').map(Number);
-      fechaSugerida = new Date(y, m - 1, d);
-      horaSugerida  = this.programacion.horaSalida.substring(0, 5); // "HH:mm"
-    }
-
-    const ref = this.dialog.open(CrearTurnoDialogComponent, {
-      width: '500px',
-      maxWidth: '96vw',
-      maxHeight: 'calc(100vh - 100px)',
-      position: { top: '92px' },
-      disableClose: true,
-      data: {
-        conductorId:       this.conductorId,
-        busIdSugerido:     this.programacion?.bus?.id,
-        busNombreSugerido: this.programacion?.bus
-          ? `${this.programacion.bus.placa} — ${this.programacion.bus.modelo}` : undefined,
-        fechaSugerida,
-        horaSugerida,
-      },
-    });
-
-    const refSub = ref.afterClosed().subscribe((turno: Turno | undefined) => {
-      if (turno) {
-        this.turno$.next(turno);
-        this.toast.success('Turno creado correctamente.');
-      }
-    });
-    this.subs.push(refSub);
-  }
-
-  abrirDialogoIniciar(): void {
     if (!this.turno) return;
 
     const ref = this.dialog.open(IniciarTurnoDialogComponent, {
@@ -260,7 +239,6 @@ export class DashboardConductorComponent implements OnInit, OnDestroy {
       if (turnoActualizado) {
         this.turno$.next(turnoActualizado);
         this.toast.success('Turno iniciado correctamente. ¡Buen viaje!');
-        // Sincronizar estado de la programacion
         this.sincronizarEstadoProgramacion('EN_CURSO');
       }
     });

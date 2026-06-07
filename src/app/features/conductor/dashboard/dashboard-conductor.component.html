@@ -73,8 +73,8 @@
           </div>
           <div class="info-data">
             <span class="info-label">Ruta</span>
-            <span class="info-value">{{ programacion!.ruta?.nombre || '—' }}</span>
-            <span class="info-sub" *ngIf="programacion!.ruta?.tarifa">
+            <span class="info-value">{{ programacion!.ruta.nombre || '—' }}</span>
+            <span class="info-sub" *ngIf="programacion!.ruta.tarifa">
               Tarifa: ${{ programacion!.ruta.tarifa | number:'1.0-0' }}
             </span>
           </div>
@@ -98,11 +98,11 @@
 
     <div class="action-section">
       <p class="action-hint">
-        Tu programación está lista. Crea tu turno para registrar el inicio de tu jornada.
+        Tu programación está lista. Confirma las condiciones del vehículo e inicia tu jornada.
       </p>
-      <button mat-flat-button class="btn-iniciar" (click)="abrirDialogoCrearTurno()">
-        <mat-icon>add_circle_outline</mat-icon>
-        Crear Turno
+      <button mat-flat-button class="btn-iniciar" (click)="abrirDialogoIniciar()" [disabled]="isCreandoTurno">
+        <mat-icon>{{ isCreandoTurno ? 'hourglass_empty' : 'play_arrow' }}</mat-icon>
+        {{ isCreandoTurno ? 'Preparando turno...' : 'Iniciar Turno' }}
       </button>
     </div>
 
@@ -243,18 +243,6 @@
       <button mat-flat-button class="btn-finalizar" (click)="abrirDialogoFinalizar()">
         <mat-icon>stop_circle</mat-icon>
         Finalizar Turno
-      </button>
-    </div>
-
-    <!-- Crear nuevo turno (FINALIZADO) -->
-    <div class="action-section action-section--crear" *ngIf="puedeCrear">
-      <p class="action-hint">
-        Tu turno anterior ha finalizado. ¿Necesitas crear un nuevo turno para hoy?
-      </p>
-      <button mat-stroked-button class="btn-crear" (click)="abrirDialogoCrearTurno()"
-        [disabled]="conductorId === null">
-        <mat-icon>add_circle_outline</mat-icon>
-        Crear Nuevo Turno
       </button>
     </div>
 

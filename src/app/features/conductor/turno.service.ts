@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { environment } from '../../../environments/environment';
 
@@ -104,10 +105,14 @@ export class TurnoService {
     return this.api.get<Programacion[]>(`${this.base}/programacion`);
   }
 
-  /** Programaciones del conductor para una fecha concreta usando los query params del DTO */
+  /** Programaciones del conductor para una fecha concreta — filtra client-side porque
+   *  el backend rechaza query params no declarados en el DTO (ValidationPipe estricto). */
   getProgramacionesConductorFecha(conductorId: number, fecha: string): Observable<Programacion[]> {
-    return this.api.get<Programacion[]>(
-      `${this.base}/programacion?conductorId=${conductorId}&fecha=${fecha}`,
+    return this.getProgramaciones().pipe(
+      map(progs => progs.filter(p => {
+        const cId = Number((p.conductorAsignado as any)?.id ?? p.conductorAsignado);
+        return cId === Number(conductorId) && p.fecha.substring(0, 10) === fecha;
+      })),
     );
   }
 
