@@ -1,0 +1,91 @@
+.dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.dialog-icon {
+  color: #1775ff;
+}
+
+.dialog-content {
+  padding: 16px 24px !important;
+  overflow-y: auto;
+  min-width: 480px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 0;
+  color: #666;
+}
+
+.bus-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field-placa {
+  max-width: 160px;
+}
+
+.field-modelo {
+  flex: 1;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.form-divider {
+  margin: 8px 0 12px;
+}
+
+.section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant, #555);
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.capacidad-total-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 14px;
+  margin: 4px 0 8px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.dialog-actions {
+  padding: 12px 24px 16px;
+  gap: 8px;
+}
+
+.btn-spinner {
+  display: inline-block;
+  margin-right: 6px;
+}

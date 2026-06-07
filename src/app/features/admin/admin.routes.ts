@@ -14,10 +14,10 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: 'buses',
-    loadComponent: () => import('../../shared/components/proximamente/proximamente.component')
-      .then(m => m.ProximamenteComponent),
-    canActivate: [roleGuard],
-    data: { titulo: 'Flota de Buses', roles: ADMIN_EMPRESA_ROLES }
+    loadComponent: () => import('./components/flota-buses/flota-buses.component')
+      .then(m => m.FlotaBusesComponent),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['ADMIN', 'ADMIN_EMPRESA'] }
   },
   {
     path: 'buses/:id/incidentes',

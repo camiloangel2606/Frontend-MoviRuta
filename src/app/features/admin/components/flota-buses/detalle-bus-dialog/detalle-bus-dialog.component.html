@@ -1,0 +1,134 @@
+<div class="dialog-header">
+  <div class="header-left">
+    <mat-icon class="header-bus-icon">directions_bus</mat-icon>
+    <div>
+      <h2 class="dialog-placa">{{ bus.placa }}</h2>
+      <span class="bus-codigo">{{ codigoBus }}</span>
+    </div>
+  </div>
+  <button mat-icon-button (click)="onCerrar()" matTooltip="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="dialog-content">
+
+  <div class="layout-grid">
+
+    <!-- Panel de información -->
+    <div class="info-panel">
+
+      <div class="info-row">
+        <span class="info-label">Modelo</span>
+        <span class="info-value">{{ bus.modelo }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Año</span>
+        <span class="info-value">{{ bus.anio }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Capacidad</span>
+        <span class="info-value">
+          <mat-icon class="inline-icon">people</mat-icon>
+          {{ bus.capacidadMaxima }} pasajeros
+        </span>
+      </div>
+      @if (bus.empresa?.nombre) {
+        <div class="info-row">
+          <span class="info-label">Empresa</span>
+          <span class="info-value">{{ bus.empresa!.nombre }}</span>
+        </div>
+      }
+
+      <mat-divider class="info-divider"></mat-divider>
+
+      <!-- Cambio de estado -->
+      <p class="section-label">Estado del bus</p>
+      <div class="estado-actual">
+        <mat-chip
+          class="estado-chip estado-{{ bus.estado | lowercase }}"
+          [disableRipple]="true">
+          {{ estadoLabel(bus.estado) }}
+        </mat-chip>
+      </div>
+
+      <div class="estado-row">
+        <mat-form-field appearance="outline" class="estado-field">
+          <mat-label>Cambiar a</mat-label>
+          <mat-select [(ngModel)]="nuevoEstado">
+            @for (op of opcionesEstado; track op.value) {
+              <mat-option [value]="op.value">{{ op.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button mat-flat-button color="primary" class="btn-guardar-estado"
+                [disabled]="!estadoCambiado || isGuardandoEstado"
+                (click)="guardarEstado()">
+          @if (isGuardandoEstado) {
+            <mat-spinner diameter="16" class="btn-spinner"></mat-spinner>
+          } @else {
+            <mat-icon>save</mat-icon>
+          }
+          Guardar
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Panel QR -->
+    <div class="qr-panel">
+      <div class="qr-wrapper">
+        <qrcode
+          [qrdata]="qrData"
+          [width]="200"
+          [errorCorrectionLevel]="'M'"
+          [colorDark]="'#1775ff'"
+          [colorLight]="'#ffffff'">
+        </qrcode>
+      </div>
+      <p class="qr-hint">Identificador del bus</p>
+      <code class="qr-data-text">{{ qrData }}</code>
+    </div>
+
+  </div>
+
+  <!-- Confirmación de eliminación -->
+  @if (confirmandoEliminar) {
+    <div class="confirm-eliminar">
+      <mat-icon class="warn-icon">warning_amber</mat-icon>
+      <p class="confirm-text">
+        ¿Eliminar el bus <strong>{{ bus.placa }}</strong>?
+        Esta acción no se puede deshacer.
+      </p>
+      <div class="confirm-actions">
+        <button mat-button (click)="onCancelarEliminar()" [disabled]="isEliminando">
+          Cancelar
+        </button>
+        <button mat-flat-button color="warn"
+                (click)="onConfirmarEliminar()"
+                [disabled]="isEliminando">
+          @if (isEliminando) {
+            <mat-spinner diameter="16" class="btn-spinner"></mat-spinner>
+          }
+          Sí, eliminar
+        </button>
+      </div>
+    </div>
+  }
+
+</mat-dialog-content>
+
+<mat-dialog-actions class="dialog-actions">
+  <button mat-stroked-button color="warn"
+          (click)="onSolicitarEliminar()"
+          [disabled]="confirmandoEliminar || isEliminando"
+          matTooltip="Eliminar bus">
+    <mat-icon>delete_outline</mat-icon>
+    Eliminar
+  </button>
+  <span class="actions-spacer"></span>
+  <button mat-stroked-button (click)="onEditar()">
+    <mat-icon>edit</mat-icon>
+    Editar bus
+  </button>
+</mat-dialog-actions>

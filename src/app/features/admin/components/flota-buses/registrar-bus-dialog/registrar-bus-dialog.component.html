@@ -1,0 +1,139 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-icon">directions_bus</mat-icon>
+  {{ modoEdicion ? 'Editar Bus' : 'Registrar Bus' }}
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  @if (isCargando) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Cargando datos...</span>
+    </div>
+  } @else {
+    <form [formGroup]="form" class="bus-form">
+
+      <!-- Placa y modelo -->
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="field-placa">
+          <mat-label>Placa</mat-label>
+          <input matInput formControlName="placa" placeholder="ABC-123" maxlength="10">
+          <mat-icon matSuffix>badge</mat-icon>
+          @if (placaCtrl.touched && placaCtrl.hasError('required')) {
+            <mat-error>La placa es obligatoria</mat-error>
+          }
+          @if (placaCtrl.touched && placaCtrl.hasError('maxlength')) {
+            <mat-error>Máximo 10 caracteres</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="field-modelo">
+          <mat-label>Modelo</mat-label>
+          <input matInput formControlName="modelo" placeholder="Mercedes Benz OF-1721">
+          @if (modeloCtrl.touched && modeloCtrl.hasError('required')) {
+            <mat-error>El modelo es obligatorio</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <!-- Año y estado -->
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Año</mat-label>
+          <input matInput type="number" formControlName="anio"
+                 [min]="1990" [max]="anioActual">
+          <mat-icon matSuffix>event</mat-icon>
+          @if (anioCtrl.touched && anioCtrl.hasError('required')) {
+            <mat-error>El año es obligatorio</mat-error>
+          }
+          @if (anioCtrl.touched && anioCtrl.hasError('min')) {
+            <mat-error>Año mínimo: 1990</mat-error>
+          }
+          @if (anioCtrl.touched && anioCtrl.hasError('max')) {
+            <mat-error>Año máximo: {{ anioActual }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Estado</mat-label>
+          <mat-select formControlName="estado">
+            @for (op of opcionesEstado; track op.value) {
+              <mat-option [value]="op.value">{{ op.label }}</mat-option>
+            }
+          </mat-select>
+          @if (estadoCtrl.touched && estadoCtrl.hasError('required')) {
+            <mat-error>El estado es obligatorio</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <mat-divider class="form-divider"></mat-divider>
+
+      <!-- Capacidades -->
+      <p class="section-label">Capacidad</p>
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Asientos</mat-label>
+          <input matInput type="number" formControlName="capacidadSentados" min="0">
+          <mat-icon matSuffix>airline_seat_recline_normal</mat-icon>
+          @if (capacidadSentadosCtrl.touched && capacidadSentadosCtrl.hasError('required')) {
+            <mat-error>Campo obligatorio</mat-error>
+          }
+          @if (capacidadSentadosCtrl.touched && capacidadSentadosCtrl.hasError('min')) {
+            <mat-error>Mínimo 0</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>De pie</mat-label>
+          <input matInput type="number" formControlName="capacidadParados" min="0">
+          <mat-icon matSuffix>accessibility_new</mat-icon>
+          @if (capacidadParadosCtrl.touched && capacidadParadosCtrl.hasError('required')) {
+            <mat-error>Campo obligatorio</mat-error>
+          }
+          @if (capacidadParadosCtrl.touched && capacidadParadosCtrl.hasError('min')) {
+            <mat-error>Mínimo 0</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="capacidad-total-badge">
+        <mat-icon>people</mat-icon>
+        <span>Capacidad total: <strong>{{ capacidadMaxima }}</strong> pasajeros</span>
+      </div>
+
+      <mat-divider class="form-divider"></mat-divider>
+
+      <!-- Empresa (oculto si solo hay una) -->
+      @if (empresas.length > 1) {
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Empresa</mat-label>
+          <mat-select formControlName="empresaId">
+            @for (emp of empresas; track emp.id) {
+              <mat-option [value]="emp.id">{{ emp.nombre }}</mat-option>
+            }
+          </mat-select>
+          @if (empresaIdCtrl.touched && empresaIdCtrl.hasError('required')) {
+            <mat-error>Seleccione una empresa</mat-error>
+          }
+        </mat-form-field>
+      }
+
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-button (click)="onCancelar()" [disabled]="isGuardando">
+    Cancelar
+  </button>
+  <button mat-flat-button color="primary"
+          (click)="onGuardar()"
+          [disabled]="!puedeGuardar">
+    @if (isGuardando) {
+      <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+    } @else {
+      <mat-icon>save</mat-icon>
+    }
+    {{ modoEdicion ? 'Guardar cambios' : 'Registrar bus' }}
+  </button>
+</mat-dialog-actions>

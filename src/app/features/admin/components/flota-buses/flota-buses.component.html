@@ -1,0 +1,134 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-info">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">directions_bus</mat-icon>
+        Flota de Buses
+      </h1>
+      <p class="page-subtitle">Gestione los vehículos registrados en la empresa de transporte.</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="abrirDialogoRegistrar()">
+      <mat-icon>add</mat-icon>
+      Registrar Bus
+    </button>
+  </div>
+
+  @if (isLoading) {
+    <div class="skeleton-grid">
+      <app-skeleton type="stat"></app-skeleton>
+      <app-skeleton type="stat"></app-skeleton>
+      <app-skeleton type="stat"></app-skeleton>
+    </div>
+    <mat-card class="table-card">
+      <app-skeleton type="text" [lines]="6"></app-skeleton>
+    </mat-card>
+  } @else if (buses.length === 0) {
+    <app-empty-state
+      icon="directions_bus"
+      title="Sin buses registrados"
+      subtitle="Registre el primer bus de la flota usando el botón 'Registrar Bus'.">
+    </app-empty-state>
+  } @else {
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-value">{{ buses.length }}</div>
+          <div class="stat-label">Total en flota</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-value stat-operativo">{{ totalOperativos }}</div>
+          <div class="stat-label">Operativos</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-value stat-mantenimiento">{{ totalMantenimiento }}</div>
+          <div class="stat-label">En mantenimiento</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-value stat-fuera">{{ totalFueraServicio }}</div>
+          <div class="stat-label">Fuera de servicio</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Tabla -->
+    <mat-card class="table-card">
+      <mat-card-content>
+        <table mat-table [dataSource]="buses" class="buses-table">
+
+          <ng-container matColumnDef="placa">
+            <th mat-header-cell *matHeaderCellDef>Placa</th>
+            <td mat-cell *matCellDef="let bus">
+              <span class="placa-code">{{ bus.placa }}</span>
+              <span class="bus-codigo">{{ formatCodigo(bus.id) }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="modelo">
+            <th mat-header-cell *matHeaderCellDef>Modelo</th>
+            <td mat-cell *matCellDef="let bus">
+              <span class="modelo-text">{{ bus.modelo }}</span>
+              @if (bus.empresa?.nombre) {
+                <span class="empresa-text">{{ bus.empresa!.nombre }}</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="anio">
+            <th mat-header-cell *matHeaderCellDef>Año</th>
+            <td mat-cell *matCellDef="let bus">
+              <code class="anio-chip">{{ bus.anio }}</code>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="capacidad">
+            <th mat-header-cell *matHeaderCellDef>Capacidad</th>
+            <td mat-cell *matCellDef="let bus">
+              <div class="capacidad-cell">
+                <mat-icon class="cap-icon">people</mat-icon>
+                <span>{{ bus.capacidadMaxima }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let bus">
+              <mat-chip
+                class="estado-chip estado-{{ bus.estado | lowercase }}"
+                [disableRipple]="true">
+                {{ estadoLabel(bus.estado) }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let bus">
+              <button mat-stroked-button
+                      class="btn-incidentes"
+                      (click)="verIncidentes(bus, $event)"
+                      matTooltip="Ver incidentes de este bus">
+                <mat-icon>warning_amber</mat-icon>
+                Incidentes
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+          <tr mat-row *matRowDef="let bus; columns: columnas;"
+              class="tabla-fila tabla-fila--clickable"
+              (click)="onFilaClick(bus)"
+              matTooltip="Ver detalle y QR"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

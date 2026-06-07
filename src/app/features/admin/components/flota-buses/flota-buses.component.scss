@@ -1,0 +1,204 @@
+.page-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+}
+
+.header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--mat-sys-on-surface, #1a1a1a);
+}
+
+.title-icon {
+  color: #1775ff;
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: var(--mat-sys-on-surface-variant, #666);
+  margin: 0;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stats-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 140px;
+
+  mat-card-content {
+    padding: 16px 20px;
+  }
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1775ff;
+  line-height: 1.2;
+
+  &.stat-operativo    { color: #2e7d32; }
+  &.stat-mantenimiento { color: #e65100; }
+  &.stat-fuera        { color: #b71c1c; }
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--mat-sys-on-surface-variant, #666);
+  margin-top: 4px;
+}
+
+.table-card {
+  mat-card-content {
+    padding: 0;
+  }
+}
+
+.buses-table {
+  width: 100%;
+
+  th {
+    font-weight: 600;
+    font-size: 13px;
+  }
+}
+
+.placa-code {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 0.08em;
+  color: #1a1a1a;
+}
+
+.bus-codigo {
+  display: block;
+  font-size: 11px;
+  color: #888;
+  font-family: monospace;
+}
+
+.modelo-text {
+  display: block;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.empresa-text {
+  display: block;
+  font-size: 11px;
+  color: var(--mat-sys-on-surface-variant, #888);
+}
+
+.anio-chip {
+  background: #f1f5ff;
+  color: #1a2e6b;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.capacidad-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cap-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #555;
+}
+
+.estado-chip {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  min-height: 22px !important;
+  height: 22px !important;
+  padding: 0 10px !important;
+  letter-spacing: 0.03em;
+}
+
+.estado-operativo {
+  background: #e8f5e9 !important;
+  color: #2e7d32 !important;
+}
+
+.estado-mantenimiento {
+  background: #fff3e0 !important;
+  color: #e65100 !important;
+}
+
+.estado-fuera_servicio {
+  background: #fce4ec !important;
+  color: #b71c1c !important;
+}
+
+.btn-incidentes {
+  font-size: 12px;
+  height: 32px;
+  line-height: 32px;
+  color: #1775ff;
+  border-color: #1775ff;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.tabla-fila {
+  &:hover {
+    background: rgba(23, 117, 255, 0.04);
+  }
+
+  &--clickable {
+    cursor: pointer;
+  }
+}

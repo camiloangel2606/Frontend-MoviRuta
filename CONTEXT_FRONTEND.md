@@ -282,7 +282,7 @@ const ADMIN_SISTEMA_ROLES = ['ADMIN'];                                  // solo 
 ### Conductor (requieren `authGuard` + `roleGuard` — roles: Conductor, admins)
 | Ruta | Componente | Descripción |
 |---|---|---|
-| `/conductor/dashboard` | `DashboardConductorComponent` | **HU-2006.** Turno activo o próximo del conductor. Muestra bus asignado, ruta (de programación), hora de inicio. Botón "Iniciar Turno" si estado=PROGRAMADO → abre dialog con radio Operativo/Con observaciones + textarea condicional. Sección GPS cuando estado=EN_CURSO: activa `watchPosition`, envía coordenadas a `PATCH /gps/:id/posicion`. Ubicación: `features/conductor/dashboard/`. |
+| `/conductor/dashboard` | `DashboardConductorComponent` | **HU-2006.** Turno del día del conductor. Flujo simplificado sin paso "Crear Turno": si hay programación para hoy y no existe turno, muestra botón **"Iniciar Turno"** que crea el turno silenciosamente (`POST /turno`) usando datos de la programación y luego abre el diálogo de confirmación. Si el turno ya existe en estado PROGRAMADO → botón "Iniciar Turno" directo. EN_CURSO → GPS card + "Finalizar Turno". FINALIZADO → banner de cierre. Programaciones filtradas client-side (`GET /programacion` sin params, filtra por conductorId y fecha local). Fecha calculada con `getFullYear/getMonth/getDate` (no `toISOString`) para evitar desfase UTC-5. Ubicación: `features/conductor/dashboard/`. |
 | `/conductor/incidente/nuevo` | `ReporteIncidenteComponent` | **HU-2007.** Formulario de reporte rápido: tipo, gravedad, descripción, hasta 5 fotos. Captura GPS con `getCurrentPosition` (redondeado a 7 decimales). Crea incidente vía `POST /incidente`, luego sube fotos con `POST /foto` usando el `id` devuelto. Dialog de confirmación para gravedad ALTA/CRITICA. Ubicación: `features/conductor/incidente/`. |
 | `/ciudadano/tarjeta/recargar` | `ProximamenteComponent` | Stub — pendiente de implementar |
 
@@ -300,10 +300,10 @@ const ADMIN_SISTEMA_ROLES = ['ADMIN'];                                  // solo 
 | `/admin/permissions/edit/:id` | `PermissionFormComponent` | Editar permiso |
 | `/admin/role-permissions` | `RolePermissionManagerComponent` | Asignar permisos a roles |
 | `/admin/sessions` | `SessionListComponent` | Ver y cerrar sesiones activas de todos los usuarios |
-| `/admin/buses` | `ProximamenteComponent` | Stub — Flota de Buses (Empresa + Sistema) |
+| `/admin/buses` | `FlotaBusesComponent` | **HU-2012.** Tabla de buses con 4 stats cards (total, operativos, mantenimiento, fuera de servicio). Columnas: placa/código (`BUS-XXXX`), modelo/empresa, año, capacidad, estado (chip). Click en fila → `DetalleBusDialogComponent`: info completa, QR del bus (`BUS-{id}:{placa}` vía `angularx-qrcode`), cambio de estado inline (MatSelect + `PATCH /bus/:id`), botón "Editar bus" (abre `RegistrarBusDialogComponent` en modo edición con form precargado, `PATCH /bus/:id`) y botón "Eliminar" con confirmación inline (`DELETE /bus/:id`). Tras registrar un bus nuevo también abre el detalle/QR. Botón "Incidentes" en la fila navega a `/admin/buses/:id/incidentes` (stopPropagation para no abrir el detalle). `BusService` (`features/admin/services/bus.service.ts`): `getBuses`, `crearBus`, `actualizarBus`, `eliminarBus`, `getEmpresas`. Roles: `ADMIN`, `ADMIN_EMPRESA`. |
 | `/admin/paraderos` | `GestionParaderosComponent` | **HU-2010.** Tabla de paraderos con buscador en tiempo real (filtra nombre y tipo con `valueChanges + debounceTime`). Columnas: nombre, código (`PAR-XXXX`), tipo (badge de color), latitud, longitud. Stats: total y terminales. Botón "Nuevo Paradero" → dialog dos paneles: formulario (nombre, tipo MatSelect, lat/lng readonly) + mapa Leaflet interactivo. Clic en mapa coloca/mueve un único marcador y hace `patchValue()` con coordenadas redondeadas a 7 decimales. `POST /paradero`. `ParaderoService` en `features/admin/services/`. Roles: `ADMIN`, `ADMIN_EMPRESA`. |
 | `/admin/rutas` | `GestionRutasComponent` | **HU-2009.** Tabla de rutas con código, tarifa y conteo de paraderos. Botón "Nueva Ruta" → dialog con form reactivo, autocomplete de paraderos, reordenamiento ↑↓, campos distancia/tiempo y mapa Leaflet en tiempo real. `POST /ruta/con-paraderos`. Roles: `ADMIN`, `ADMIN_EMPRESA`. |
-| `/admin/programaciones` | `ProximamenteComponent` | Stub — Programaciones (Empresa + Sistema) |
+| `/admin/programaciones` | `ProgramacionesComponent` | **HU-2011.** Tabla de programaciones con columnas ruta/bus/conductor/fecha/horaSalida/estado/recurrencia. Stats cards. Filtro por estado (MatSelect). Botón "Nueva Programación" → dialog con `provideNativeDateAdapter()`: rutaId, busId, conductorId, fecha (DatePicker), horaSalida (time input), toleranciaMinutos (default 5), tipoRecurrencia (MatRadioGroup DIARIA/LUNES_A_VIERNES/FINES_DE_SEMANA) controlado por MatSlideToggle `esRecurrente`. Verificación de conflictos client-side al cambiar busId o fecha. `POST /programacion`. Roles: `ADMIN`, `ADMIN_EMPRESA`. |
 | `/admin/reportes/ingresos` | `ProximamenteComponent` | Stub — Reporte de Ingresos |
 | `/admin/reportes/demografia` | `ProximamenteComponent` | Stub — Reporte Demográfico |
 | `/admin/reportes/incidentes` | `IncidentesBusComponent` | **HU-2008 (modo general).** Lista todos los incidentes de la flota. 3 stats cards (total, tipo más frecuente, tasa resolución). Filtros cliente por tipo y estado. Tabla con columnas bus, fecha, conductor, tipo, gravedad (chip), estado. Click en fila abre MatDrawer lateral con datos completos, fotos, comentarios de sesión y cambio de estado vía PATCH. |
@@ -343,13 +343,25 @@ Servicio singleton para todo lo relacionado con conductores, turnos y GPS. Usa `
 | `getPersonaBySecurity(securityUserId)` | `GET /persona/security/:id` | Obtiene la Persona del usuario autenticado usando su UUID de Spring Boot |
 | `getConductores()` | `GET /conductor` | Trae todos; se filtra client-side con `Number(c.persona?.id) === Number(persona.id)` |
 | `getTurnosConductor(conductorId)` | `GET /turno/conductor/:conductorId` | Endpoint específico — devuelve solo los turnos del conductor, con conductor+bus anidados |
-| `getProgramaciones()` | `GET /programacion` | Trae todas; se filtra client-side (el ValidationPipe rechaza params no declarados en el DTO) |
+| `getProgramaciones()` | `GET /programacion` | Trae todas sin params; el ValidationPipe rechaza query params no declarados en el DTO |
+| `getProgramacionesConductorFecha(conductorId, fecha)` | `GET /programacion` (filtro client-side) | No envía params al backend. Filtra por `conductorAsignado.id` y `p.fecha.substring(0,10) === fecha` |
+| `actualizarEstadoProgramacion(programacionId, estado)` | `PATCH /programacion/:id` | `{ estado }` — sincroniza estado de la programación cuando el conductor inicia o finaliza turno |
+| `crearTurno(dto)` | `POST /turno` | `{ conductorId, busId, inicio: ISOString, observaciones? }` — usado en auto-creación silenciosa desde dashboard |
 | `iniciarTurno(id, dto)` | `POST /turno/:id/iniciar` | `dto: { observaciones?: string }` → cambia estado a EN_CURSO |
+| `finalizarTurno(id)` | `POST /turno/:id/finalizar` | Sin body → cambia estado a FINALIZADO |
+| `getBuses()` | `GET /bus` | Trae todos; se filtra OPERATIVOS client-side en `CrearTurnoDialog` |
 | `getGps()` | `GET /gps` | Trae todos los dispositivos; se filtra client-side por `bus.id` |
 | `actualizarPosicion(gpsId, lat, lng)` | `PATCH /gps/:id/posicion` | `{ latitud, longitud }` — llamado desde `watchPosition` del navegador |
+| `crearIncidente(dto)` | `POST /incidente` | Ver HU-2007 |
+| `crearFoto(dto)` | `POST /foto` | `{ incidenteId, url }` — foto en base64 data-URL |
 
 **Lección aprendida — ValidationPipe estricto:**
-> El backend NestJS rechaza con **400 Bad Request** cualquier query param que no esté en el DTO (`forbidNonWhitelisted: true`). NO enviar `?conductorId=X` a `/programacion` ni `?conductorAsignadoId=X` — esos campos no existen en `FindProgramacionQueryDto`. Siempre traer todo y filtrar en el frontend cuando los params del DTO no están documentados.
+> El backend NestJS rechaza con **400 Bad Request** cualquier query param que no esté en el DTO (`forbidNonWhitelisted: true`). NO enviar `?conductorId=X` a `/programacion` ni `?conductorAsignadoId=X` ni `?fecha=X` — esos campos no existen en `FindProgramacionQueryDto`. Siempre traer todo y filtrar en el frontend cuando los params del DTO no están documentados. Mismo patrón aplica a `/paradero` y potencialmente a otros endpoints no documentados.
+
+**Lección aprendida — Fecha local vs UTC (Colombia UTC-5):**
+> NUNCA usar `new Date().toISOString().split('T')[0]` para calcular la fecha de hoy — en Colombia después de las 7pm, `toISOString()` ya devuelve el día siguiente en UTC.  
+> Usar: `const d = new Date(); \`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}\``  
+> Al comparar fechas devueltas por la API usar `.substring(0, 10)` porque el backend puede devolver datetime completo (`"2026-06-06T00:00:00.000Z"`).
 
 **Flujo de identificación conductor (DashboardConductorComponent):**
 ```
@@ -603,6 +615,32 @@ Sin `position.top`, el dialog se centra en el viewport y su mitad superior queda
 - **Errores resueltos:**
   - Selector de `SkeletonLoaderComponent` es `app-skeleton`, no `app-skeleton-loader`.
   - Roles de ruta deben ser `ADMIN_EMPRESA_ROLES` — strings como `'Administrador Sistema'` no coinciden con los roles reales del backend.
+
+### Sesión — HU-2011 (ProgramacionesComponent)
+- **Creado:** `features/admin/components/programaciones/programaciones.component.ts/html/scss` + `nueva-programacion-dialog/nueva-programacion-dialog.component.ts`.
+- **Creado:** `features/admin/services/programacion.service.ts` — interfaces `Bus`, `Conductor`, `Programacion`, `CrearProgramacionDto`, `RecurrenciaEnum`, `EstadoProgramacion`. Métodos: `getProgramaciones()`, `getBuses()`, `getRutas()`, `getConductores()`, `crearProgramacion(dto)`.
+- **Ruta:** `/admin/programaciones` en `admin.routes.ts` — reemplaza stub. `canActivate: [authGuard, roleGuard]`, `data: { roles: ['ADMIN', 'ADMIN_EMPRESA'] }`.
+- **Tabla:** columnas ruta, bus, conductor, fecha, horaSalida, estado (chip), recurrencia. Stats: total, en curso y programadas.
+- **Dialog "Nueva Programación":** `provideNativeDateAdapter()` en providers. FormGroup con `rutaId`, `busId`, `conductorId`, `fecha` (DatePicker), `horaSalida` (time input), `toleranciaMinutos` (default 5), `tipoRecurrencia`. Toggle `esRecurrente` fuera del form controla visibilidad del `MatRadioGroup` (DIARIA | LUNES_A_VIERNES | FINES_DE_SEMANA). Cuando `esRecurrente=false` → envía `UNICA`.
+- **Detección de conflictos:** `valueChanges` en `busId` y `fecha` → `GET /programacion` sin params → filtra client-side por `bus.id`, `fecha` y `estado !== 'CANCELADO'` → si hay conflicto `busCtrl.setErrors({ conflicto: true })`.
+- **Fecha del DatePicker:** convertida a `YYYY-MM-DD` con `formatFecha(date: Date)` usando `getFullYear/getMonth/getDate` local (no `toISOString`).
+- **`TurnoService`:** añadido `actualizarEstadoProgramacion(programacionId, estado)` → `PATCH /programacion/:id` — usado por el dashboard del conductor al iniciar/finalizar turno.
+
+### Sesión — HU-2006 actualización (auto-create turno + fixes fecha)
+- **Eliminado:** paso "Crear Turno" del flujo del conductor. `CrearTurnoDialogComponent` ya no se importa en `DashboardConductorComponent`.
+- **Nuevo flujo `abrirDialogoIniciar()`:** si `!turno && programacion` → crea turno silenciosamente con `{ conductorId, busId: programacion.bus.id, inicio: new Date().toISOString() }` → re-entra recursivamente con turno disponible → abre `IniciarTurnoDialogComponent`. Mientras espera muestra `isCreandoTurno=true` ("Preparando turno...").
+- **Fix fecha local:** `cargarTurnoHoy()` usa `getFullYear/getMonth/getDate` en lugar de `toISOString().split('T')[0]` — corrección crítica para Colombia (UTC-5) donde después de las 7pm la fecha UTC ya es mañana.
+- **Fix filtro programaciones:** `getProgramacionesConductorFecha` ya no envía query params (causaban 400 del ValidationPipe). Llama a `GET /programacion` sin params y filtra con `p.fecha.substring(0,10) === fecha` para tolerar formatos datetime completos de la API.
+- **Eliminado:** getter `puedeCrear`, método `abrirDialogoCrearTurno()`, sección "Crear Nuevo Turno" del template.
+
+### Sesión — HU-2012 (FlotaBusesComponent — CRUD completo)
+- **Creado:** `features/admin/components/flota-buses/` — `FlotaBusesComponent` + `RegistrarBusDialogComponent` + `DetalleBusDialogComponent` (subcarpetas). `QrBusDialogComponent` reemplazado por `DetalleBusDialogComponent`.
+- **Creado:** `features/admin/services/bus.service.ts` — interfaces `Bus` (sin campo foto — la entidad backend no lo tiene), `Empresa`, `CrearBusDto`, `ActualizarBusDto`. Métodos: `getBuses()` → `GET /bus`, `crearBus(dto)` → `POST /bus`, `actualizarBus(id, dto)` → `PATCH /bus/:id`, `eliminarBus(id)` → `DELETE /bus/:id`, `getEmpresas()` → `GET /empresa`.
+- **Ruta:** `/admin/buses` en `admin.routes.ts` — `canActivate: [authGuard, roleGuard]`, `data: { roles: ['ADMIN', 'ADMIN_EMPRESA'] }`. Reemplaza el stub `ProximamenteComponent`.
+- **RegistrarBusDialogComponent** — modo creación y modo edición controlados por `@Optional() @Inject(MAT_DIALOG_DATA)`. Si llega `{ bus }` en data → modo edición: precarga el form con `patchValue` (`capacidadSentados = bus.capacidadMaxima`, `capacidadParados = 0`), título "Editar Bus", llama `PATCH`. Si no llega data → modo creación, llama `POST`. Empresa auto-seleccionada solo en creación cuando hay 1 empresa.
+- **DetalleBusDialogComponent** — muestra info completa + QR (`angularx-qrcode`, `qrdata = "BUS-{id}:{placa}"`). Cambio de estado: MatSelect (`ngModel`) + botón "Guardar" habilitado solo si `nuevoEstado !== bus.estado`, llama `PATCH /bus/:id { estado }`. Eliminar: botón → confirmar inline → `DELETE /bus/:id`. Editar: cierra dialog devolviendo `{ action: 'edit', bus }` para que el padre abra `RegistrarBusDialogComponent`. Cierre normal devuelve `null`.
+- **Flujo en FlotaBusesComponent:** click en fila → `abrirDetalle(bus)` → si result `action=edit` → `abrirDialogoEditar(bus)` → toast + `cargarBuses()`; si `action=deleted` → toast + `cargarBuses()`. Tras registro exitoso: toast + `cargarBuses()` + `abrirDetalle(busNuevo)`. Botón "Incidentes" usa `event.stopPropagation()` para no abrir detalle.
+- **Sin foto en buses** — `POST /bus` y `PATCH /bus/:id` solo aceptan `{ placa, modelo, anio, capacidadMaxima, empresaId, estado? }`. No enviar ni mostrar campo foto.
 
 ### Sesión — HU-2010 (GestionParaderosComponent)
 - **Creado:** `features/admin/components/gestion-paraderos/` — `GestionParaderosComponent` + `NuevoParaderoDialogComponent` (subcarpeta `nuevo-paradero-dialog/`).
