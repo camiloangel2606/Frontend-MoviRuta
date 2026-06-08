@@ -1,0 +1,252 @@
+.page-container {
+  padding: 24px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--mat-sys-on-surface, #1a1a1a);
+}
+
+.title-icon {
+  color: #1775ff;
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: var(--mat-sys-on-surface-variant, #666);
+  margin: 0;
+}
+
+// ── Skeleton ─────────────────────────────────────────────────────────────────
+
+.skeleton-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// ── Layout ────────────────────────────────────────────────────────────────────
+
+.recarga-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.recarga-card {
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px;
+  }
+}
+
+// ── Saldo actual ──────────────────────────────────────────────────────────────
+
+.saldo-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1775ff15, #1775ff08);
+  border: 1px solid #1775ff30;
+  border-radius: 10px;
+}
+
+.saldo-icon {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+  color: #1775ff;
+}
+
+.saldo-label {
+  font-size: 13px;
+  color: var(--mat-sys-on-surface-variant, #666);
+  margin-bottom: 2px;
+}
+
+.saldo-valor {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1775ff;
+  line-height: 1.2;
+}
+
+// ── Sección ───────────────────────────────────────────────────────────────────
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface, #1a1a1a);
+  margin-bottom: -8px;
+}
+
+// ── Botones de monto ──────────────────────────────────────────────────────────
+
+.montos-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.btn-monto {
+  height: 48px;
+  font-size: 14px;
+  font-weight: 600;
+  border-color: #d0d0d0 !important;
+  color: #333 !important;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: #1775ff !important;
+    color: #1775ff !important;
+    background: #1775ff0a !important;
+  }
+
+  &--activo {
+    border-color: #1775ff !important;
+    color: #1775ff !important;
+    background: #1775ff12 !important;
+    box-shadow: 0 0 0 1px #1775ff40;
+  }
+}
+
+// ── Campo personalizado ───────────────────────────────────────────────────────
+
+.monto-field {
+  width: 100%;
+}
+
+// ── Resumen ───────────────────────────────────────────────────────────────────
+
+.resumen-card {
+  background: var(--mat-sys-surface-variant, #f7f9ff) !important;
+
+  mat-card-content {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+.resumen-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface, #1a1a1a);
+  margin-bottom: 4px;
+}
+
+.resumen-fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+
+  &--total {
+    padding-top: 6px;
+    font-weight: 600;
+  }
+}
+
+.resumen-key {
+  color: var(--mat-sys-on-surface-variant, #555);
+}
+
+.resumen-val {
+  color: var(--mat-sys-on-surface, #1a1a1a);
+  font-weight: 500;
+
+  &--monto {
+    color: #1775ff;
+    font-weight: 600;
+  }
+
+  &--total {
+    font-size: 16px;
+    color: #1775ff;
+    font-weight: 700;
+  }
+}
+
+.resumen-divider {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 4px 0;
+}
+
+// ── Info card ─────────────────────────────────────────────────────────────────
+
+.info-card {
+  background: #fffde7 !important;
+  border: 1px solid #ffe08a !important;
+
+  mat-card-content {
+    padding: 12px 16px;
+  }
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.info-icon {
+  color: #f59f00;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.info-text {
+  font-size: 13px;
+  color: #5c4813;
+  margin: 0;
+  line-height: 1.5;
+}
+
+// ── Botón continuar ───────────────────────────────────────────────────────────
+
+.btn-continuar {
+  width: 100%;
+  height: 48px;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.spinner-inline {
+  display: inline-block;
+}

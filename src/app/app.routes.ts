@@ -52,8 +52,9 @@
       children: [
         {
           path: 'tarjeta/recargar',
-          loadComponent: () => import('./shared/components/proximamente/proximamente.component').then(m => m.ProximamenteComponent),
-          data: { titulo: 'Recargar Tarjeta', roles: ['CIUDADANO'] }
+          loadComponent: () => import('./features/boletos/recarga-tarjeta/recarga-tarjeta.component').then(m => m.RecargaTarjetaComponent),
+          canActivate: [authGuard, roleGuard],
+          data: { roles: ['CIUDADANO'] }
         }
       ]
     },

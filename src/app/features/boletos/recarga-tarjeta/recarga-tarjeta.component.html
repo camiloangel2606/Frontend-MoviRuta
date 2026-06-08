@@ -1,0 +1,132 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-info">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">credit_card</mat-icon>
+        Recargar Tarjeta
+      </h1>
+      <p class="page-subtitle">Agrega saldo a tu tarjeta de transporte de forma segura.</p>
+    </div>
+  </div>
+
+  @if (isLoading) {
+    <div class="skeleton-layout">
+      <mat-card class="recarga-card">
+        <mat-card-content>
+          <app-skeleton type="stat"></app-skeleton>
+          <app-skeleton type="text" [lines]="4" height="48px"></app-skeleton>
+          <app-skeleton type="text" [lines]="3"></app-skeleton>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  } @else {
+
+    <div class="recarga-layout">
+      <mat-card class="recarga-card">
+        <mat-card-content>
+
+          <!-- Saldo actual -->
+          <div class="saldo-header">
+            <mat-icon class="saldo-icon">account_balance_wallet</mat-icon>
+            <div>
+              <div class="saldo-label">Saldo actual</div>
+              <div class="saldo-valor">{{ saldoActual | currency:'COP':'$':'1.0-0' }}</div>
+            </div>
+          </div>
+
+          <div class="section-title">Selecciona un monto</div>
+
+          <!-- Botones de montos predefinidos -->
+          <div class="montos-grid">
+            @for (monto of montosPredef; track monto) {
+              <button
+                mat-stroked-button
+                class="btn-monto"
+                [class.btn-monto--activo]="montoPredefSeleccionado === monto"
+                (click)="seleccionarMonto(monto)">
+                {{ monto | currency:'COP':'$':'1.0-0' }}
+              </button>
+            }
+          </div>
+
+          <!-- Monto personalizado -->
+          <mat-form-field appearance="outline" class="monto-field">
+            <mat-label>Monto personalizado</mat-label>
+            <input
+              matInput
+              type="number"
+              [formControl]="montoCtrl"
+              placeholder="Ej: 35000"
+              (input)="onMontoPersonalizado()" />
+            <mat-icon matSuffix>edit</mat-icon>
+            @if (montoCtrl.hasError('min') || montoCtrl.hasError('max')) {
+              <mat-error>El monto debe estar entre $5.000 y $500.000</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Resumen -->
+          <mat-card class="resumen-card" appearance="outlined">
+            <mat-card-content>
+              <div class="resumen-title">Resumen de recarga</div>
+              <div class="resumen-fila">
+                <span class="resumen-key">Saldo actual</span>
+                <span class="resumen-val">{{ saldoActual | currency:'COP':'$':'1.0-0' }}</span>
+              </div>
+              <div class="resumen-fila">
+                <span class="resumen-key">Monto a recargar</span>
+                <span class="resumen-val resumen-val--monto">
+                  {{ montoActual | currency:'COP':'$':'1.0-0' }}
+                </span>
+              </div>
+              <div class="resumen-divider"></div>
+              <div class="resumen-fila resumen-fila--total">
+                <span class="resumen-key">Saldo después de recarga</span>
+                <span class="resumen-val resumen-val--total">
+                  {{ saldoFuturo | currency:'COP':'$':'1.0-0' }}
+                </span>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Nota informativa -->
+          <mat-card class="info-card" appearance="outlined">
+            <mat-card-content>
+              <div class="info-row">
+                <mat-icon class="info-icon">info</mat-icon>
+                <p class="info-text">
+                  El pago se procesa de forma segura a través de ePayco.
+                  Pueden aplicar comisiones según tu método de pago.
+                </p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Botón continuar (dos versiones separadas para que MatButton
+               proyecte el mat-icon en el slot correcto sin warnings) -->
+          @if (isProcesando) {
+            <button
+              mat-raised-button
+              color="primary"
+              class="btn-continuar"
+              disabled>
+              <mat-spinner diameter="20" class="spinner-inline"></mat-spinner>
+              <span>Procesando...</span>
+            </button>
+          } @else {
+            <button
+              mat-raised-button
+              color="primary"
+              class="btn-continuar"
+              [disabled]="!puedeContiuar"
+              (click)="continuar()">
+              <mat-icon>lock</mat-icon>
+              <span>Continuar al pago</span>
+            </button>
+          }
+
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+  }
+</div>

@@ -199,10 +199,12 @@ export class NuevaProgramacionDialogComponent implements OnInit, OnDestroy {
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
 
-  /** Comprueba solapamiento de horario igual a como lo hace el backend */
+  /** Comprueba solapamiento de horario igual a como lo hace el backend.
+   *  Una programación FINALIZADA o CANCELADA libera el bus/conductor,
+   *  así que se pueden reutilizar aunque exista una previa en esos estados. */
   private tieneConflictoHorario(progs: any[], horaSalida: string, toleranciaMin: number): boolean {
     const activas = (Array.isArray(progs) ? progs : (progs as any).data ?? [])
-      .filter((p: any) => p.estado !== 'CANCELADO');
+      .filter((p: any) => p.estado !== 'CANCELADO' && p.estado !== 'FINALIZADO');
 
     if (activas.length === 0) return false;
     if (!horaSalida) return true;

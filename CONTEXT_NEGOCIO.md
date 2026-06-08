@@ -356,10 +356,10 @@ MS_SECURITY=http://localhost:8080
 
 | Método | Ruta | Qué hace | Body esperado | Respuesta |
 |---|---|---|---|---|
-| POST | `/boleto` | Compra boleto | `{ ciudadanoId, programacionId, rutaParaderoOrigenId, metodoPagoId }` | Boleto |
+| POST | `/boleto` | Compra boleto. Acepta programación en estado `ACTIVO` o `EN_CURSO` (sube en paradero intermedio). Rechaza `FINALIZADO`/`CANCELADO`. | `{ ciudadanoId, programacionId, rutaParaderoOrigenId, metodoPagoId }` | Boleto |
 | GET | `/boleto` | Lista boletos (filtra con `?ciudadanoId=`) | — | Boleto[] |
 | GET | `/boleto/:id` | Detalle | — | Boleto |
-| PATCH | `/boleto/:id` | Actualiza boleto | campos parciales | Boleto |
+| PATCH | `/boleto/:id` | **Registra descenso** enviando `{ rutaParaderoDescensoId }`. El backend pone `estado=COMPLETADO`, `horaFin=NOW()` y valida que el paradero pertenezca a la ruta del boleto y que su `orden` sea mayor al de origen. Si el boleto tiene datos huérfanos (programación/ruta nulas) responde `400` con mensaje claro. | `{ rutaParaderoDescensoId }` | Boleto |
 | DELETE | `/boleto/:id` | Elimina | — | — |
 
 ---
@@ -567,7 +567,9 @@ La URL base de ms-security se configura con la variable `MS_SECURITY=http://loca
    - Luego `POST /persona` con ese `securityUserId`.
    - Luego `POST /ciudadano` o `POST /conductor` según el rol.
 
-3. **Boleto requiere programación activa.** Para crear un boleto se necesita el `programacionId`, el `rutaParaderoOrigenId` (paradero donde aborda), el `ciudadanoId` y el `metodoPagoId`. El campo `costo` se calcula en el servicio a partir de la tarifa de la ruta.
+3. **Boleto requiere programación abordable.** Para crear un boleto se necesita el `programacionId`, el `rutaParaderoOrigenId` (paradero donde aborda), el `ciudadanoId` y el `metodoPagoId`. El campo `costo` se calcula en el servicio a partir de la tarifa de la ruta. La programación se acepta tanto en `ACTIVO` como en `EN_CURSO` (el bus va en ruta y el ciudadano se sube en un paradero intermedio).
+
+3.1. **Descenso de boleto.** Se hace con `PATCH /boleto/:id` enviando `{ rutaParaderoDescensoId }` (id del `RutaParadero`, no del paradero). El backend valida pertenencia a la ruta del boleto + `orden > orden de origen`, marca `estado=COMPLETADO` y setea `horaFin`. Para obtener el id del `RutaParadero` de cada paradero posterior NO sirve `GET /ruta/:id/paraderos` (no devuelve el id del RP), usar `GET /ruta-paradero` y filtrar client-side por `rutaId`.
 
 4. **GPS en tiempo real.** Usar `PATCH /gps/:id/posicion` con `{ latitud, longitud }` para actualizaciones de posición del bus. No usar el PATCH general del GPS para posición.
 

@@ -98,38 +98,47 @@ export class DashboardConductorComponent implements OnInit, OnDestroy {
       ),
       switchMap(conductor =>
         forkJoin({
-          turnos:        this.turnoService.getTurnosConductor(conductor.id),
+          // Sólo pedimos turnos activos al backend — los finalizados/cancelados no interesan aquí.
+          turnos:        this.turnoService.getTurnosConductor(conductor.id, ['PROGRAMADO', 'EN_CURSO']),
           programaciones: this.turnoService.getProgramacionesConductorFecha(conductor.id, hoy),
         }).pipe(
           map(({ turnos, programaciones }) => {
             const ahora = Date.now();
 
-            // Turno relevante: EN_CURSO primero, luego PROGRAMADO reciente
-            const turnoRelevante = turnos
-              .filter(t => {
-                const estado = t.estado?.toUpperCase();
-                if (estado === 'EN_CURSO') return true;
-                if (estado === 'PROGRAMADO') {
-                  return new Date(t.inicio).getTime() >= ahora - 24 * 60 * 60 * 1000;
-                }
-                return false;
-              })
-              .sort((a, b) => {
-                const aEC = a.estado?.toUpperCase() === 'EN_CURSO';
-                const bEC = b.estado?.toUpperCase() === 'EN_CURSO';
-                if (aEC && !bEC) return -1;
-                if (!aEC && bEC) return 1;
-                return new Date(a.inicio).getTime() - new Date(b.inicio).getTime();
-              })[0] ?? null;
+            // Turno relevante:
+            //   1º Un EN_CURSO (solo puede haber uno activo) → ese.
+            //   2º Si no, el PROGRAMADO más PRÓXIMO en el futuro (mínimo inicio >= ahora).
+            //   3º Si tampoco hay futuro, el PROGRAMADO más reciente del pasado (por si
+            //      el conductor olvidó iniciarlo y aún quiere arrancarlo).
+            const enCurso = turnos.find(t => t.estado?.toUpperCase() === 'EN_CURSO') ?? null;
 
-            // Programacion de hoy: si hay turno, intentar emparejar por bus;
-            // si no, tomar la primera (más temprana)
-            const progsSorted = [...programaciones].sort((a, b) =>
-              a.horaSalida.localeCompare(b.horaSalida),
-            );
+            const programados = turnos
+              .filter(t => t.estado?.toUpperCase() === 'PROGRAMADO')
+              .sort((a, b) => new Date(a.inicio).getTime() - new Date(b.inicio).getTime());
+
+            const proximoFuturo = programados.find(t => new Date(t.inicio).getTime() >= ahora) ?? null;
+            const ultimoPasado  = [...programados].reverse().find(t => new Date(t.inicio).getTime() < ahora) ?? null;
+
+            const turnoRelevante = enCurso ?? proximoFuturo ?? ultimoPasado;
+
+            // Programaciones del día — excluimos FINALIZADO/CANCELADO porque
+            // esas ya consumieron su turno (o nunca se ejecutarán).
+            const progsActivas = programaciones
+              .filter(p => p.estado !== 'FINALIZADO' && p.estado !== 'CANCELADO')
+              .sort((a, b) => a.horaSalida.localeCompare(b.horaSalida));
+
+            // Si hay turno EN_CURSO, intentamos emparejar por bus (la programación
+            // que está corriendo ahora). Si no, tomamos la próxima en horario futuro;
+            // si no hay futura, la última activa de hoy (por si el conductor llega tarde).
+            const ahoraHHMM = `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}:00`;
+            const proximaProgFutura = progsActivas.find(p => p.horaSalida >= ahoraHHMM) ?? null;
+            const ultimaProgActiva  = progsActivas[progsActivas.length - 1] ?? null;
+
             const progHoy = turnoRelevante
-              ? (progsSorted.find(p => p.bus?.id === turnoRelevante.bus?.id) ?? progsSorted[0] ?? null)
-              : (progsSorted[0] ?? null);
+              ? (progsActivas.find(p => p.bus?.id === turnoRelevante.bus?.id)
+                  ?? proximaProgFutura
+                  ?? ultimaProgActiva)
+              : (proximaProgFutura ?? ultimaProgActiva);
 
             return { turno: turnoRelevante, programacion: progHoy, conductorId: Number(conductor.id) };
           }),

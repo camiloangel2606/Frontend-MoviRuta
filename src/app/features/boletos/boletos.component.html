@@ -276,20 +276,59 @@
       {{ boletoEnDescenso?.programacion?.horaSalida }}
     </div>
 
-    <!-- Selector de paradero de descenso -->
-    <mat-form-field appearance="outline" style="width:100%;">
-      <mat-label>¿En qué paradero se baja?</mat-label>
-      <mat-select [(ngModel)]="rutaParaderoDescensoId">
-        <mat-option *ngFor="let p of paraderosDescensoModal"
-                    [value]="p.rutaParaderoId">
-          🏁 #{{ p.orden }} — {{ p.nombre }}
-          <span *ngIf="p.tipo" style="color:#94a3b8;">[{{ p.tipo }}]</span>
-        </mat-option>
-      </mat-select>
-      <mat-hint *ngIf="paraderosDescensoModal.length === 0">
-        No hay paraderos posteriores disponibles en esta ruta.
-      </mat-hint>
-    </mat-form-field>
+    <!-- Caso especial: el ciudadano abordó en el último paradero -->
+    <div *ngIf="esUltimoParadero"
+         style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;
+                padding:14px 16px;display:flex;align-items:flex-start;gap:10px;
+                color:#78350f;font-size:13px;line-height:1.5;">
+      <mat-icon style="color:#d97706;font-size:20px;width:20px;height:20px;
+                       flex-shrink:0;margin-top:1px;">flag</mat-icon>
+      <div>
+        <strong>Este es el último paradero de la ruta.</strong><br>
+        El boleto se cerrará automáticamente al confirmar el descenso aquí.
+      </div>
+    </div>
+
+    <!-- Selector de paradero de descenso — select HTML nativo (no depende de
+         cdk-overlay-container, funciona dentro de cualquier modal manual) -->
+    <div *ngIf="!esUltimoParadero">
+      <label for="select-paradero-descenso"
+             style="display:block;font-size:13px;font-weight:600;color:#374151;
+                    margin-bottom:8px;">
+        ¿En qué paradero se baja?
+      </label>
+
+      <div *ngIf="paraderosDescensoModal.length === 0"
+           style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;
+                  padding:12px;color:#991b1b;font-size:12px;">
+        No se pudieron cargar los paraderos posteriores. Intenta de nuevo.
+      </div>
+
+      <select
+        *ngIf="paraderosDescensoModal.length > 0"
+        id="select-paradero-descenso"
+        [(ngModel)]="rutaParaderoDescensoId"
+        (change)="onChangeParaderoDescenso($event)"
+        style="width:100%;padding:12px 14px;font-size:14px;
+               border:1.5px solid #cbd5e1;border-radius:10px;background:#fff;
+               color:#0f172a;font-family:inherit;cursor:pointer;
+               outline:none;transition:border-color .15s ease;"
+        onfocus="this.style.borderColor='#2563eb'"
+        onblur="this.style.borderColor='#cbd5e1'">
+        <option [ngValue]="null" disabled>— Selecciona un paradero —</option>
+        <option *ngFor="let p of paraderosDescensoModal"
+                [ngValue]="p.rutaParaderoId">
+          #{{ p.orden }} — {{ p.nombre }}{{ p.tipo ? ' [' + p.tipo + ']' : '' }}
+        </option>
+      </select>
+
+      <div *ngIf="rutaParaderoDescensoId"
+           style="margin-top:8px;font-size:12px;color:#16a34a;
+                  display:flex;align-items:center;gap:6px;">
+        <mat-icon style="font-size:16px;width:16px;height:16px;">check_circle</mat-icon>
+        Paradero seleccionado (ID: {{ rutaParaderoDescensoId }})
+      </div>
+    </div>
 
     <!-- Acciones -->
     <div style="display:flex;gap:12px;justify-content:flex-end;">

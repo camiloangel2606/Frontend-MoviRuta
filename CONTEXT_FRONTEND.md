@@ -276,15 +276,15 @@ const ADMIN_SISTEMA_ROLES = ['ADMIN'];                                  // solo 
 | `/dashboard` | `DashboardComponent` | Pantalla principal: stats, accesos rápidos, info del usuario |
 | `/profile` | `ProfileComponent` | Ver perfil, editar datos, cambiar contraseña, gestionar sesiones activas |
 | `/rutas` | `RutasComponent` | Mapa Leaflet con rutas de transporte, planificación, marcadores de paradas |
-| `/movilidad/boletos` | `BoletosComponent` | Compra y gestión de boletos/tiquetes. Tabla con botón 🗺️ por fila que navega al detalle. Visible en sidebar para todos los autenticados. |
-| `/movilidad/boletos/:id` | `DetalleViajeComponent` | **HU-2005.** Detalle de un viaje: mapa Leaflet con polyline de la ruta completa, marcador verde en paradero de abordaje y rojo en descenso, panel lateral con hora de abordaje (`programacion.fecha + horaSalida`), hora de descenso (`boleto.horaFin`), duración calculada, placa/modelo del bus y nombre del conductor. Llama a `GET /boleto/:id` y luego `GET /ruta/:rutaId/paraderos`. Ubicación: `features/boletos/detalle-viaje/`. |
+| `/movilidad/boletos` | `BoletosComponent` | Compra y gestión de boletos/tiquetes. Tabla con botón 🗺️ por fila que navega al detalle. Visible en sidebar para todos los autenticados. **Filtra programaciones activas client-side** (`estado !== 'FINALIZADO' && estado !== 'CANCELADO'`) — el dropdown solo muestra programaciones en `PROGRAMADO`/`EN_CURSO`. Al abrir modal de descenso valida que `boleto.programacion?.id` exista antes de llamar `GET /programacion/:id` (evita el error 400 con `undefined`). |
+| `/movilidad/boletos/:id` | `DetalleViajeComponent` | **HU-2005.** Detalle de un viaje: mapa Leaflet con polyline de la ruta completa, marcador verde en paradero de abordaje y rojo en descenso, panel lateral con hora de abordaje (`programacion.fecha + horaSalida`), hora de descenso (`boleto.horaFin`), duración calculada, placa/modelo del bus y nombre del conductor. Llama a `GET /boleto/:id` y luego `GET /ruta/:rutaId/paraderos`. **⚠️ Importante:** las coordenadas `latitud`/`longitud` llegan como STRING (TypeORM serializa `decimal` así) — siempre hacer `parseFloat()` antes de pasar a Leaflet. Ubicación: `features/boletos/detalle-viaje/`. |
 
 ### Conductor (requieren `authGuard` + `roleGuard` — roles: Conductor, admins)
 | Ruta | Componente | Descripción |
 |---|---|---|
-| `/conductor/dashboard` | `DashboardConductorComponent` | **HU-2006.** Turno del día del conductor. Flujo simplificado sin paso "Crear Turno": si hay programación para hoy y no existe turno, muestra botón **"Iniciar Turno"** que crea el turno silenciosamente (`POST /turno`) usando datos de la programación y luego abre el diálogo de confirmación. Si el turno ya existe en estado PROGRAMADO → botón "Iniciar Turno" directo. EN_CURSO → GPS card + "Finalizar Turno". FINALIZADO → banner de cierre. Programaciones filtradas client-side (`GET /programacion` sin params, filtra por conductorId y fecha local). Fecha calculada con `getFullYear/getMonth/getDate` (no `toISOString`) para evitar desfase UTC-5. Ubicación: `features/conductor/dashboard/`. |
+| `/conductor/dashboard` | `DashboardConductorComponent` | **HU-2006.** Turno del día del conductor. Flujo simplificado sin paso "Crear Turno": si hay programación para hoy y no existe turno, muestra botón **"Iniciar Turno"** que crea el turno silenciosamente (`POST /turno`) usando datos de la programación y luego abre el diálogo de confirmación. Si el turno ya existe en estado PROGRAMADO → botón "Iniciar Turno" directo. EN_CURSO → GPS card + "Finalizar Turno". FINALIZADO → banner de cierre. Pide solo turnos activos al backend con `getTurnosConductor(id, ['PROGRAMADO', 'EN_CURSO'])`. **Lógica de selección del turno relevante:** 1º EN_CURSO si existe, 2º próximo PROGRAMADO futuro (`inicio >= now`), 3º último PROGRAMADO pasado (para que el conductor pueda cerrarlo manualmente). **Lógica de selección de programación del día:** filtra primero `estado !== 'FINALIZADO' && estado !== 'CANCELADO'`, luego prefiere la próxima por `horaSalida >= ahora`. Programaciones filtradas client-side (`GET /programacion` sin params, filtra por conductorId y fecha local). Fecha calculada con `getFullYear/getMonth/getDate` (no `toISOString`) para evitar desfase UTC-5. Ubicación: `features/conductor/dashboard/`. |
 | `/conductor/incidente/nuevo` | `ReporteIncidenteComponent` | **HU-2007.** Formulario de reporte rápido: tipo, gravedad, descripción, hasta 5 fotos. Captura GPS con `getCurrentPosition` (redondeado a 7 decimales). Crea incidente vía `POST /incidente`, luego sube fotos con `POST /foto` usando el `id` devuelto. Dialog de confirmación para gravedad ALTA/CRITICA. Ubicación: `features/conductor/incidente/`. |
-| `/ciudadano/tarjeta/recargar` | `ProximamenteComponent` | Stub — pendiente de implementar |
+| `/ciudadano/tarjeta/recargar` | `RecargaTarjetaComponent` | **HU-2013.** Recarga de tarjeta del ciudadano vía pasarela ePayco (modo redirección — el frontend NUNCA maneja datos de tarjeta). Carga la tarjeta activa del ciudadano en `ngOnInit` haciendo `GET /persona/security/:id` → `GET /metodo-pago-ciudadano?ciudadanoId=X` (toma el primer resultado). Muestra saldo actual con `CurrencyPipe` COP. 4 botones de montos predefinidos ($10K, $20K, $50K, $100K) + `MatFormField` para monto personalizado con `Validators.min(5000)` + `Validators.max(500000)`. Panel de resumen reactivo (saldo actual, monto, saldo futuro). Al click en "Continuar al pago": `POST /pagos/referencia { tarjetaId, monto }` → carga `https://checkout.epayco.co/checkout.js` dinámicamente con `data-epayco-key` → `ePayco.checkout.configure({key, test})` retorna `handler` → `handler.open({ name, description, invoice, currency: 'cop', amount, response, confirmation, ... })`. URLs `response` y `confirmation` apuntan a `environment.epayco.webhookBaseUrl` (ngrok en dev, dominio real en prod). **Polling de saldo:** después de abrir el checkout corre `setInterval` cada 3s durante 5 minutos llamando a `GET /metodo-pago-ciudadano?ciudadanoId=X`; cuando detecta que el saldo cambió → muestra toast "Saldo actualizado: $X" + resetea form + detiene polling. Adicionalmente `@HostListener('window:focus')` refresca el saldo cuando el usuario vuelve a la pestaña tras pagar. Ubicación: `features/boletos/recarga-tarjeta/`. Modelos en `shared/models/tarjeta.models.ts` (`TarjetaActiva`, `ReferenciaTransaccion`). |
 
 ### Admin (requieren `authGuard` + `roleGuard`)
 | Ruta | Componente | Descripción |
@@ -303,7 +303,7 @@ const ADMIN_SISTEMA_ROLES = ['ADMIN'];                                  // solo 
 | `/admin/buses` | `FlotaBusesComponent` | **HU-2012.** Tabla de buses con 4 stats cards (total, operativos, mantenimiento, fuera de servicio). Columnas: placa/código (`BUS-XXXX`), modelo/empresa, año, capacidad, estado (chip). Click en fila → `DetalleBusDialogComponent`: info completa, QR del bus (`BUS-{id}:{placa}` vía `angularx-qrcode`), cambio de estado inline (MatSelect + `PATCH /bus/:id`), botón "Editar bus" (abre `RegistrarBusDialogComponent` en modo edición con form precargado, `PATCH /bus/:id`) y botón "Eliminar" con confirmación inline (`DELETE /bus/:id`). Tras registrar un bus nuevo también abre el detalle/QR. Botón "Incidentes" en la fila navega a `/admin/buses/:id/incidentes` (stopPropagation para no abrir el detalle). `BusService` (`features/admin/services/bus.service.ts`): `getBuses`, `crearBus`, `actualizarBus`, `eliminarBus`, `getEmpresas`. Roles: `ADMIN`, `ADMIN_EMPRESA`. |
 | `/admin/paraderos` | `GestionParaderosComponent` | **HU-2010.** Tabla de paraderos con buscador en tiempo real (filtra nombre y tipo con `valueChanges + debounceTime`). Columnas: nombre, código (`PAR-XXXX`), tipo (badge de color), latitud, longitud. Stats: total y terminales. Botón "Nuevo Paradero" → dialog dos paneles: formulario (nombre, tipo MatSelect, lat/lng readonly) + mapa Leaflet interactivo. Clic en mapa coloca/mueve un único marcador y hace `patchValue()` con coordenadas redondeadas a 7 decimales. `POST /paradero`. `ParaderoService` en `features/admin/services/`. Roles: `ADMIN`, `ADMIN_EMPRESA`. |
 | `/admin/rutas` | `GestionRutasComponent` | **HU-2009.** Tabla de rutas con código, tarifa y conteo de paraderos. Botón "Nueva Ruta" → dialog con form reactivo, autocomplete de paraderos, reordenamiento ↑↓, campos distancia/tiempo y mapa Leaflet en tiempo real. `POST /ruta/con-paraderos`. Roles: `ADMIN`, `ADMIN_EMPRESA`. |
-| `/admin/programaciones` | `ProgramacionesComponent` | **HU-2011.** Tabla de programaciones con columnas ruta/bus/conductor/fecha/horaSalida/estado/recurrencia. Stats cards. Filtro por estado (MatSelect). Botón "Nueva Programación" → dialog con `provideNativeDateAdapter()`: rutaId, busId, conductorId, fecha (DatePicker), horaSalida (time input), toleranciaMinutos (default 5), tipoRecurrencia (MatRadioGroup DIARIA/LUNES_A_VIERNES/FINES_DE_SEMANA) controlado por MatSlideToggle `esRecurrente`. Verificación de conflictos client-side al cambiar busId o fecha. `POST /programacion`. Roles: `ADMIN`, `ADMIN_EMPRESA`. |
+| `/admin/programaciones` | `ProgramacionesComponent` | **HU-2011.** Tabla de programaciones con columnas ruta/bus/conductor/fecha/horaSalida/estado/recurrencia. Stats cards. Filtro por estado (MatSelect). Botón "Nueva Programación" → dialog con `provideNativeDateAdapter()`: rutaId, busId, conductorId, fecha (DatePicker), horaSalida (time input), toleranciaMinutos (default 5), tipoRecurrencia (MatRadioGroup DIARIA/LUNES_A_VIERNES/FINES_DE_SEMANA) controlado por MatSlideToggle `esRecurrente`. **Verificación de conflictos client-side**: al cambiar busId/conductorId/fecha consulta programaciones existentes y bloquea si alguna se solapa (±toleranciaMinutos). **Una programación en estado `FINALIZADO` o `CANCELADO` NO bloquea** — se considera que el bus/conductor quedó libre, por lo que se pueden reutilizar. Solo bloquean las que están en `PROGRAMADO`/`EN_CURSO`. `POST /programacion`. Roles: `ADMIN`, `ADMIN_EMPRESA`. |
 | `/admin/reportes/ingresos` | `ProximamenteComponent` | Stub — Reporte de Ingresos |
 | `/admin/reportes/demografia` | `ProximamenteComponent` | Stub — Reporte Demográfico |
 | `/admin/reportes/incidentes` | `IncidentesBusComponent` | **HU-2008 (modo general).** Lista todos los incidentes de la flota. 3 stats cards (total, tipo más frecuente, tasa resolución). Filtros cliente por tipo y estado. Tabla con columnas bus, fecha, conductor, tipo, gravedad (chip), estado. Click en fila abre MatDrawer lateral con datos completos, fotos, comentarios de sesión y cambio de estado vía PATCH. |
@@ -342,7 +342,7 @@ Servicio singleton para todo lo relacionado con conductores, turnos y GPS. Usa `
 |---|---|---|
 | `getPersonaBySecurity(securityUserId)` | `GET /persona/security/:id` | Obtiene la Persona del usuario autenticado usando su UUID de Spring Boot |
 | `getConductores()` | `GET /conductor` | Trae todos; se filtra client-side con `Number(c.persona?.id) === Number(persona.id)` |
-| `getTurnosConductor(conductorId)` | `GET /turno/conductor/:conductorId` | Endpoint específico — devuelve solo los turnos del conductor, con conductor+bus anidados |
+| `getTurnosConductor(conductorId, estados?)` | `GET /turno/conductor/:conductorId?estados=PROGRAMADO,EN_CURSO` | Acepta segundo parámetro opcional `estados: string[]` que se serializa como query param separado por coma. El backend filtra; si el backend aún no soporta el filtro, devuelve todos los turnos y el frontend filtra igualmente. |
 | `getProgramaciones()` | `GET /programacion` | Trae todas sin params; el ValidationPipe rechaza query params no declarados en el DTO |
 | `getProgramacionesConductorFecha(conductorId, fecha)` | `GET /programacion` (filtro client-side) | No envía params al backend. Filtra por `conductorAsignado.id` y `p.fecha.substring(0,10) === fecha` |
 | `actualizarEstadoProgramacion(programacionId, estado)` | `PATCH /programacion/:id` | `{ estado }` — sincroniza estado de la programación cuando el conductor inicia o finaliza turno |
@@ -374,9 +374,16 @@ currentUser.id (UUID Spring Boot)
 
 > ⚠️ `persona.id` ≠ `conductor.id`. Siempre usar `conductor.id` para consultar turnos y programaciones. Usar `Number()` en comparaciones de IDs para evitar fallos por tipo string/number.
 
-**Lógica de selección de turno (dashboard):**
-- Se muestra el primer turno EN_CURSO (sin importar fecha) O el próximo PROGRAMADO (inicio >= ahora − 24h).
-- El filtro de fecha exacta a "hoy" es demasiado restrictivo — los turnos pueden crearse para fechas futuras.
+**Lógica de selección de turno (dashboard) — versión vigente:**
+- Prioridad: 1º EN_CURSO existente, 2º próximo PROGRAMADO con `inicio >= ahora`, 3º último PROGRAMADO pasado (para permitir cierre manual de turnos olvidados).
+- `FINALIZADO` y `CANCELADO` SIEMPRE se excluyen. Se pide al backend solo `?estados=PROGRAMADO,EN_CURSO` para ahorrar tráfico.
+
+**Lógica de selección de programación del día (dashboard):**
+- Filtra `progsActivas = programaciones.filter(p => p.estado !== 'FINALIZADO' && p.estado !== 'CANCELADO')`.
+- Si hay turno EN_CURSO → empareja por `bus.id`. Si no, prefiere `proximaProgFutura = progsActivas.find(p => p.horaSalida >= "HH:MM:00")`. Fallback al último activo del día.
+
+**Tipos de fecha en CSV vs API:**
+- Una programación FINALIZADA en la BD tiene `updated_at` posterior y `estado = 'FINALIZADO'`. El frontend respeta ese estado — no se compara contra hora actual para decidir si "ya pasó".
 
 ---
 
@@ -391,7 +398,17 @@ export const environment = {
   apiUrl: 'http://localhost:5050/api',       // Spring Boot — auth, usuarios, roles
   negocioUrl: 'http://localhost:3000',        // NestJS — rutas, boletos, planificación
   recaptchaSiteKey: '6Lc_TKgsAAAAAIExjkRjqGLU8yiATxAAr0TcbilD',
-  securityLogsEnabled: true
+  securityLogsEnabled: true,
+  epayco: {
+    publicKey: '68362615c6bd7a4f53aac3a7db80248e',
+    p_cust_id_cliente: '1583948',
+    p_key: '85d9be539ada27ad0b8e9a05805d7e23a3f16af',
+    test: true,                               // true en sandbox, false en producción
+    checkoutUrl: 'https://checkout.epayco.co/checkout.js',
+    webhookBaseUrl: 'https://xxx.ngrok-free.dev' // URL pública para que ePayco
+                                                  // alcance /pagos/respuesta y
+                                                  // /pagos/confirmacion. En dev usar ngrok.
+  }
 };
 
 // environment.prod.ts (producción)
@@ -410,6 +427,12 @@ export const environment = {
 | `negocioUrl` | URL base del backend NestJS (rutas de transporte, boletos) |
 | `recaptchaSiteKey` | Clave pública de reCAPTCHA v3 para formularios de auth |
 | `securityLogsEnabled` | Activa logs de seguridad en consola (solo desarrollo) |
+| `epayco.publicKey` | Clave pública del comercio en ePayco (frontend) |
+| `epayco.p_cust_id_cliente` | ID de cliente ePayco (necesario para verificación de firma en backend) |
+| `epayco.p_key` | Llave privada del comercio (DEBE estar también en backend `.env` como `EPAYCO_P_KEY`) |
+| `epayco.test` | `true` = sandbox (tarjetas de prueba), `false` = producción |
+| `epayco.checkoutUrl` | URL del script JS de ePayco que se carga dinámicamente |
+| `epayco.webhookBaseUrl` | URL pública para que ePayco envíe los webhooks (`/pagos/respuesta`, `/pagos/confirmacion`). En dev → ngrok. En prod → dominio público del backend. |
 
 ---
 
@@ -641,6 +664,44 @@ Sin `position.top`, el dialog se centra en el viewport y su mitad superior queda
 - **DetalleBusDialogComponent** — muestra info completa + QR (`angularx-qrcode`, `qrdata = "BUS-{id}:{placa}"`). Cambio de estado: MatSelect (`ngModel`) + botón "Guardar" habilitado solo si `nuevoEstado !== bus.estado`, llama `PATCH /bus/:id { estado }`. Eliminar: botón → confirmar inline → `DELETE /bus/:id`. Editar: cierra dialog devolviendo `{ action: 'edit', bus }` para que el padre abra `RegistrarBusDialogComponent`. Cierre normal devuelve `null`.
 - **Flujo en FlotaBusesComponent:** click en fila → `abrirDetalle(bus)` → si result `action=edit` → `abrirDialogoEditar(bus)` → toast + `cargarBuses()`; si `action=deleted` → toast + `cargarBuses()`. Tras registro exitoso: toast + `cargarBuses()` + `abrirDetalle(busNuevo)`. Botón "Incidentes" usa `event.stopPropagation()` para no abrir detalle.
 - **Sin foto en buses** — `POST /bus` y `PATCH /bus/:id` solo aceptan `{ placa, modelo, anio, capacidadMaxima, empresaId, estado? }`. No enviar ni mostrar campo foto.
+
+### Sesión — HU-2013 (RecargaTarjetaComponent + flujo ePayco)
+- **Creado:** `features/boletos/recarga-tarjeta/recarga-tarjeta.component.ts/html/scss` (standalone).
+- **Creado:** `shared/models/tarjeta.models.ts` con `TarjetaActiva { id, saldo, tipo }` y `ReferenciaTransaccion { referencia, monto, descripcion }`.
+- **Ruta:** `/ciudadano/tarjeta/recargar` en `app.routes.ts` con `canActivate: [authGuard, roleGuard]`, `data: { roles: ['CIUDADANO'] }`. Reemplaza el stub `ProximamenteComponent` que estaba antes.
+- **Sidebar:** "Recargar Tarjeta" → `/ciudadano/tarjeta/recargar` ya existía en el grupo Ciudadano (`['CIUDADANO']`).
+- **Flujo de pago ePayco (modo redirección — el frontend nunca toca datos de tarjeta):**
+  1. `ngOnInit` carga la tarjeta activa del ciudadano: `GET /persona/security/:securityUserId` → `GET /metodo-pago-ciudadano?ciudadanoId=X`. Toma el primer resultado.
+  2. Al click "Continuar al pago": `POST /pagos/referencia { tarjetaId, monto }` → recibe `{ referencia, monto, descripcion }`.
+  3. Carga `https://checkout.epayco.co/checkout.js` dinámicamente con atributo `data-epayco-key`. Si ya está en DOM lo reutiliza. `script.onload` → abrir checkout; `script.onerror` → toast "No se pudo conectar con la pasarela de pago".
+  4. `const handler = ePayco.checkout.configure({key, test})` — **devuelve un handler nuevo, NO mutación in-place**. Llamar `ePayco.checkout.open(...)` directamente lanza `TypeError: ePayco.checkout.open is not a function`.
+  5. `handler.open({ name, description, invoice, currency: 'cop', amount: String, response, confirmation, ... })`.
+  6. `response` y `confirmation` apuntan a `environment.epayco.webhookBaseUrl` — URL pública (ngrok en dev) porque ePayco no puede alcanzar `localhost`.
+- **Polling de saldo:** al abrir el checkout arranca `setInterval` cada 3s durante hasta 5 minutos (100 intentos) que llama `GET /metodo-pago-ciudadano?ciudadanoId=X`. Cuando detecta cambio de saldo → toast "Saldo actualizado: $X" + reset del form + `clearInterval`.
+- **`@HostListener('window:focus')`:** refresca el saldo inmediatamente al volver a la pestaña, sin esperar al próximo tick del polling. Útil porque ePayco abre el checkout en modal que muchos navegadores tratan como pestaña separada.
+- **UI:** saldo actual con `CurrencyPipe` COP, 4 botones de montos predefinidos (10K/20K/50K/100K) que marcan/desmarcan visualmente y actualizan el FormControl; campo personalizado con `Validators.min(5000)` + `Validators.max(500000)`; panel de resumen reactivo (saldo actual + monto = saldo futuro); MatCard de aviso "Pago seguro vía ePayco"; botón con spinner durante el `POST /pagos/referencia`.
+- **`declare const ePayco: any`** al nivel de módulo para que TypeScript no se queje del objeto global cargado dinámicamente.
+- **Endpoints en backend NestJS:** `POST /pagos/referencia` (genera invoice y guarda transacción), `POST /pagos/confirmacion` (webhook server-to-server, verifica firma SHA256 con `EPAYCO_CUST_ID`/`EPAYCO_P_KEY` del `.env` del backend, actualiza saldo si `x_response === 'Aceptada'`, retorna 200 siempre). `GET /pagos/respuesta` redirección del navegador (no actualiza saldo).
+- **Errores resueltos:**
+  - `TypeError: ePayco.checkout.open is not a function` → `configure()` devuelve handler, no muta. Usar `handler.open(...)`.
+  - 404 inicial en `/pagos/referencia` → el módulo no existía en backend; se mandó prompt detallado para crearlo.
+  - 200 OK en webhook pero saldo no cambia en BD → verificación de firma fallaba por mismatch entre `EPAYCO_P_KEY` del frontend y `.env` del backend. También requiere `app.use(express.urlencoded({ extended: true }))` en `main.ts` para parsear el body que envía ePayco.
+  - Frontend mostraba saldo viejo aunque la BD ya estaba correcta → polling demasiado corto (60s); se subió a 5min + listener de focus.
+
+### Sesión — Fix descenso de boleto (HU-ENTR-2-004) + abordaje con programación EN_CURSO
+- **`BoletosComponent.onChangeParaderoDescenso`** — bug: botón "Confirmar Descenso" quedaba deshabilitado siempre. Causa: el `<select>` con `[ngValue]` numérico pone en `target.value` la forma interna de Angular (`"2: 10"`), y el handler hacía `Number("2: 10") → NaN` sobrescribiendo el valor bueno que `[(ngModel)]` ya guardaba (`10`). Fix: dejar que `[(ngModel)]` haga el trabajo y NO normalizar desde `target.value`. El handler queda vacío (solo se conserva para diagnóstico futuro).
+- **`BoletosComponent.confirmarDescenso`** — el flujo correcto es `PATCH /boleto/:id { rutaParaderoDescensoId }`. El id es el del `RutaParadero` (la pivot), no el del paradero. Para construir la lista de paraderos posteriores no sirve `GET /ruta/:id/paraderos` (no devuelve el id de la pivot), se usa `GET /ruta-paradero` y se filtra client-side por `rutaId`.
+- **Backend `boleto.service.ts` (NestJS)** — dos fixes:
+  - `create()`: aceptar programación en `ACTIVO` **o** `EN_CURSO` (antes solo `ACTIVO`). El ciudadano debe poder subirse a un bus que ya está rodando.
+  - `update()` (descenso): guardas defensivas para `boleto.programacion` y `rutaParaderoDescenso.ruta` nulos → `400 BadRequest` con mensaje claro en vez de `500 TypeError`. Esto evita el crash cuando un boleto antiguo tiene FKs huérfanas, pero NO repara el dato: para descenso usar boletos creados después del fix.
+
+### Sesión — Fix bugs múltiples (selectores Mis Viajes, mapa detalle, conflictos programación, lógica turno conductor)
+- **`BoletosComponent`** — bug: dropdowns vacíos porque pedía `?estado=ACTIVO` y el estado por defecto en BD es `PROGRAMADO`. Fix: quitar query param y filtrar client-side `estado !== 'FINALIZADO' && estado !== 'CANCELADO'` para mostrar solo programaciones activas.
+- **`BoletosComponent.abrirModalDescenso`** — bug: `GET /programacion/undefined` cuando `boleto.programacion?.id` no existe → 400. Fix: validar `progId` antes de la petición; abrir modal vacío si no hay programación válida.
+- **`DetalleViajeComponent`** — bug: mapa Leaflet vacío. Causa: TypeORM serializa `decimal(10,7)` como STRING, no number, y Leaflet ignora silenciosamente coordenadas string. Fix: `parseFloat(p.paradero.latitud as any)` y `parseFloat(p.paradero.longitud as any)` antes de construir polyline y markers. Guard `isNaN` antes de crear cada marker.
+- **`NuevaProgramacionDialogComponent.tieneConflictoHorario`** — la validación de conflictos bloqueaba bus/conductor permanentemente si tenían cualquier programación previa con horario solapado. Fix: excluir también `FINALIZADO` del filtro (`estado !== 'CANCELADO' && estado !== 'FINALIZADO'`). Un recurso ocupado solo si la programación previa está activa.
+- **`DashboardConductorComponent`** — bug: con turno PROGRAMADO de las 01:23 (pasado) y otro de las 02:00 (próximo) mostraba siempre el de las 01:23 porque ordenaba ascendente por inicio y tomaba `[0]`. Fix: nueva lógica de prioridad (EN_CURSO → próximo futuro → último pasado). También se aplicó misma lógica a la selección de la programación del día (excluye FINALIZADO/CANCELADO + prefiere `horaSalida >= ahoraHHMM`).
+- **`TurnoService.getTurnosConductor(id, estados?)`** — segundo parámetro opcional para pedir solo turnos activos al backend (`?estados=PROGRAMADO,EN_CURSO`). Si el backend aún no implementa el filtro, devuelve todos los turnos y el frontend filtra igual.
 
 ### Sesión — HU-2010 (GestionParaderosComponent)
 - **Creado:** `features/admin/components/gestion-paraderos/` — `GestionParaderosComponent` + `NuevoParaderoDialogComponent` (subcarpeta `nuevo-paradero-dialog/`).

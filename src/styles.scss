@@ -348,3 +348,12 @@ a {
     padding: 106px 18px 28px;
   }
 }
+
+// ── Fix global: cdk-overlay-container debe estar SIEMPRE por encima de los
+//    modales manuales que algunos componentes legacy (BoletosComponent)
+//    pintan con position:fixed + z-index:9999. Sin esto, los mat-select y
+//    mat-autocomplete dentro de esos modales abren su panel detrás del
+//    backdrop y el usuario no puede seleccionar opciones.
+.cdk-overlay-container {
+  z-index: 10000 !important;
+}

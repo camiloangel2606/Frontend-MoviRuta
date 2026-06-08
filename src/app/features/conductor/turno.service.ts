@@ -97,8 +97,9 @@ export class TurnoService {
     return this.api.get<Conductor[]>(`${this.base}/conductor`);
   }
 
-  getTurnosConductor(conductorId: number): Observable<Turno[]> {
-    return this.api.get<Turno[]>(`${this.base}/turno/conductor/${conductorId}`);
+  getTurnosConductor(conductorId: number, estados?: string[]): Observable<Turno[]> {
+    const query = estados?.length ? `?estados=${estados.join(',')}` : '';
+    return this.api.get<Turno[]>(`${this.base}/turno/conductor/${conductorId}${query}`);
   }
 
   getProgramaciones(): Observable<Programacion[]> {
