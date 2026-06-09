@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
+import { switchMap } from 'rxjs/operators';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,6 +13,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
+
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-boletos',
@@ -34,14 +37,12 @@ export class BoletosComponent implements OnInit {
 
   // ── Catálogos ─────────────────────────────────────────────────────────────
   public programaciones: any[]       = [];
-  /** RutaParaderos de la programación elegida, ordenados por `orden` */
   public paraderosDeRuta: any[]      = [];
-  /** Solo paraderos con orden MAYOR al origen elegido */
   public paraderosDestino: any[]     = [];
 
-  // ── Método de pago ────────────────────────────────────────────────────────
-  public metodosPago: any[]          = [{ identificador: '—', saldo: 0 }];
-  public metodoPagoId: number | null = null;
+  // ── Métodos de pago del usuario en sesión ─────────────────────────────────
+  public metodosPagoCiudadano: any[] = [];
+  public metodoPagoSeleccionadoId: number | null = null;
 
   // ── Modelos del formulario de abordaje ────────────────────────────────────
   public programacionId: number | null      = null;
@@ -53,27 +54,72 @@ export class BoletosComponent implements OnInit {
   public paraderosDescensoModal: any[]     = [];
   public rutaParaderoDescensoId: number | null = null;
 
-  // ── Sesión ────────────────────────────────────────────────────────────────
-  public usuarioSesionId = 5;
+  // ── Sesión — se resuelve dinámicamente en ngOnInit ────────────────────────
+  public ciudadanoId: number | null = null;
+  public cargandoSesion = true;
 
   private API = 'http://localhost:3000';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private auth: AuthService,
+  ) {}
 
   ngOnInit(): void {
-    this.cargarBoletos();
+    this.resolverCiudadano();
     this.cargarProgramaciones();
-    this.cargarSaldo();
+  }
+
+  // ── Resolución del ciudadano en sesión ────────────────────────────────────
+
+  private resolverCiudadano(): void {
+    const securityUserId = this.auth.getCurrentUser()?.id;
+    if (!securityUserId) {
+      this.cargandoSesion = false;
+      return;
+    }
+
+    this.http.get<any>(`${this.API}/persona/security/${securityUserId}`).subscribe({
+      next: (persona) => {
+        this.ciudadanoId = persona?.ciudadanoId ?? null;
+        this.cargandoSesion = false;
+        if (this.ciudadanoId) {
+          this.cargarBoletos();
+          this.cargarMetodosPago();
+        }
+      },
+      error: (e) => {
+        console.error('Error al resolver ciudadano:', e);
+        this.cargandoSesion = false;
+      },
+    });
   }
 
   // ── Carga inicial ─────────────────────────────────────────────────────────
 
   cargarBoletos(): void {
+    if (!this.ciudadanoId) return;
     this.http
-      .get<any[]>(`${this.API}/boleto?ciudadanoId=${this.usuarioSesionId}`)
+      .get<any[]>(`${this.API}/boleto?ciudadanoId=${this.ciudadanoId}`)
       .subscribe({
         next:  (d) => (this.boletos = d),
         error: (e) => console.error('Error boletos:', e),
+      });
+  }
+
+  cargarMetodosPago(): void {
+    if (!this.ciudadanoId) return;
+    this.http
+      .get<any[]>(`${this.API}/metodo-pago-ciudadano?ciudadanoId=${this.ciudadanoId}`)
+      .subscribe({
+        next: (d) => {
+          this.metodosPagoCiudadano = d ?? [];
+          // Pre-seleccionar el primero si solo hay uno
+          if (this.metodosPagoCiudadano.length === 1) {
+            this.metodoPagoSeleccionadoId = this.metodosPagoCiudadano[0].id;
+          }
+        },
+        error: (e) => console.error('Error métodos de pago:', e),
       });
   }
 
@@ -82,8 +128,6 @@ export class BoletosComponent implements OnInit {
       .get<any[]>(`${this.API}/programacion`)
       .subscribe({
         next: (d) => {
-          // Solo programaciones activas: ni finalizadas ni canceladas.
-          // El estado por defecto en la entidad es 'PROGRAMADO'.
           this.programaciones = (d ?? []).filter(
             (p) => p.estado !== 'FINALIZADO' && p.estado !== 'CANCELADO',
           );
@@ -92,18 +136,11 @@ export class BoletosComponent implements OnInit {
       });
   }
 
-  cargarSaldo(): void {
-    this.http
-      .get<any[]>(`${this.API}/metodo-pago-ciudadano?ciudadanoId=${this.usuarioSesionId}`)
-      .subscribe({
-        next: (d) => {
-          if (d?.length > 0) {
-            this.metodoPagoId = d[0].id;
-            this.metodosPago  = [{ identificador: d[0].identificador, saldo: parseFloat(d[0].saldo) }];
-          }
-        },
-        error: (e) => console.error('Error saldo:', e),
-      });
+  // ── Helper para la tarjeta de saldo del método seleccionado ──────────────
+
+  get metodoPagoSeleccionado(): any | null {
+    if (!this.metodoPagoSeleccionadoId) return null;
+    return this.metodosPagoCiudadano.find(m => m.id === this.metodoPagoSeleccionadoId) ?? null;
   }
 
   // ── Selección de programación → carga paraderos ───────────────────────────
@@ -119,7 +156,7 @@ export class BoletosComponent implements OnInit {
     this.paraderosDeRuta = [...prog.ruta.paraderosEnRuta]
       .sort((a: any, b: any) => a.orden - b.orden)
       .map((item: any) => ({
-        rutaParaderoId: item.id,        // id de RutaParadero — lo enviamos al backend
+        rutaParaderoId: item.id,
         paraderoId:     item.paradero.id,
         nombre:         item.paradero.nombre,
         tipo:           item.paradero.tipo,
@@ -130,25 +167,30 @@ export class BoletosComponent implements OnInit {
   // ── HU-ENTR-2-003: Registrar Abordaje ────────────────────────────────────
 
   registrarAbordaje(): void {
-    if (!this.programacionId || !this.rutaParaderoOrigenId || !this.metodoPagoId) {
-      alert('Selecciona una programación, un paradero de origen y verifica tu método de pago.');
+    if (!this.ciudadanoId) {
+      alert('No se pudo identificar tu cuenta. Vuelve a iniciar sesión.');
+      return;
+    }
+    if (!this.programacionId || !this.rutaParaderoOrigenId || !this.metodoPagoSeleccionadoId) {
+      alert('Selecciona una programación, un paradero de origen y un método de pago.');
       return;
     }
 
     const payload = {
-      ciudadanoId:          this.usuarioSesionId,
+      ciudadanoId:          this.ciudadanoId,
       programacionId:       this.programacionId,
       rutaParaderoOrigenId: this.rutaParaderoOrigenId,
-      metodoPagoId:         this.metodoPagoId,
+      metodoPagoId:         this.metodoPagoSeleccionadoId,
     };
 
     this.http.post(`${this.API}/boleto`, payload).subscribe({
       next: () => {
         this.cargarBoletos();
-        this.cargarSaldo();
-        this.programacionId       = null;
-        this.rutaParaderoOrigenId = null;
-        this.paraderosDeRuta      = [];
+        this.cargarMetodosPago();
+        this.programacionId          = null;
+        this.rutaParaderoOrigenId    = null;
+        this.metodoPagoSeleccionadoId = null;
+        this.paraderosDeRuta         = [];
       },
       error: (e) => {
         console.error('Error al registrar abordaje:', e);
@@ -159,7 +201,6 @@ export class BoletosComponent implements OnInit {
 
   // ── HU-ENTR-2-004: Modal de Descenso ─────────────────────────────────────
 
-  /** Flag para mostrar el mensaje "ya estás en el último paradero" en el modal */
   public esUltimoParadero = false;
 
   abrirModalDescenso(boleto: any): void {
@@ -170,11 +211,6 @@ export class BoletosComponent implements OnInit {
 
     const ordenOrigen = boleto.rutaParaderoOrigen?.orden ?? -1;
 
-    // Buscamos los paraderos de la ruta. Tres estrategias en cascada:
-    //   1º La programación en caché ya trae paraderosEnRuta anidados.
-    //   2º Pedimos /programacion/:id si el boleto la referencia.
-    //   3º El boleto es huérfano (programacion=null) → sacamos la rutaId
-    //      desde rutaParaderoOrigen y consultamos /ruta/:id/paraderos.
     const progCacheada = this.programaciones.find(
       (p) => p.id === boleto.programacion?.id,
     );
@@ -201,7 +237,6 @@ export class BoletosComponent implements OnInit {
       return;
     }
 
-    // Boleto huérfano — pedir el RutaParadero para obtener la rutaId
     const rutaParaderoOrigenId = boleto.rutaParaderoOrigen?.id;
     if (!rutaParaderoOrigenId) {
       this.mostrarModalDescenso = true;
@@ -215,10 +250,6 @@ export class BoletosComponent implements OnInit {
           this.mostrarModalDescenso = true;
           return;
         }
-        // IMPORTANTE: GET /ruta/:id/paraderos no incluye el id del RutaParadero
-        // (solo trae orden + paradero anidado). Para poder hacer el PATCH del
-        // descenso necesitamos GET /ruta-paradero (lista global) y filtrar
-        // client-side por rutaId — ese sí trae el id de cada RutaParadero.
         this.http.get<any[]>(`${this.API}/ruta-paradero`).subscribe({
           next: (todos) => {
             const items = (todos ?? []).filter(
@@ -240,19 +271,7 @@ export class BoletosComponent implements OnInit {
     });
   }
 
-  /** Filtra los paraderos a los que el ciudadano puede bajarse (orden > origen),
-   *  los ordena y los normaliza al formato del dropdown. Marca `esUltimoParadero`
-   *  cuando la lista filtrada queda vacía pero SÍ existe la ruta. */
   private aplicarParaderosFiltrados(items: any[], ordenOrigen: number): void {
-    console.warn('========== [Descenso] DEBUG ==========');
-    console.warn('[Descenso] cantidad items:', items?.length ?? 0);
-    console.warn('[Descenso] ordenOrigen:', ordenOrigen);
-    console.warn('[Descenso] PRIMER item (estructura completa):',
-      items?.[0] ? JSON.stringify(items[0], null, 2) : 'NO HAY ITEMS');
-    console.warn('[Descenso] CAMPOS del primer item:',
-      items?.[0] ? Object.keys(items[0]) : []);
-    console.warn('======================================');
-
     const todosOrdenados = [...items].sort(
       (a: any, b: any) => (a.orden ?? 0) - (b.orden ?? 0),
     );
@@ -262,10 +281,6 @@ export class BoletosComponent implements OnInit {
     );
 
     this.paraderosDescensoModal = posteriores.map((item: any) => {
-      // El id del RutaParadero puede venir con distintos nombres según el endpoint:
-      //   - `id` cuando viene de /ruta/:id/paraderos (RutaParadero entity)
-      //   - `rutaParaderoId` si el backend lo expone con ese alias
-      //   - dentro de objeto anidado en algunos formatos
       const rutaParaderoId =
         item.id ?? item.rutaParaderoId ?? item.rutaParadero?.id;
 
@@ -280,12 +295,8 @@ export class BoletosComponent implements OnInit {
         tipo:           paraderoTipo,
         orden:          item.orden,
       };
-    }).filter((p) => p.rutaParaderoId != null); // descarta los que no tengan id válido
+    }).filter((p) => p.rutaParaderoId != null);
 
-    console.log('[Descenso] paraderos normalizados:', this.paraderosDescensoModal);
-
-    // Si la ruta tiene paraderos pero ninguno es posterior, el ciudadano
-    // abordó en el último — no hay descenso posible posterior.
     this.esUltimoParadero =
       todosOrdenados.length > 0 && posteriores.length === 0;
   }
@@ -298,28 +309,18 @@ export class BoletosComponent implements OnInit {
     this.esUltimoParadero       = false;
   }
 
-  /** Marca un paradero como seleccionado — solo uno a la vez. */
   seleccionarParaderoDescenso(rutaParaderoId: number | null | undefined): void {
     if (rutaParaderoId == null) return;
     this.rutaParaderoDescensoId = Number(rutaParaderoId);
   }
 
-  /** Handler del <select> nativo. Con [ngValue] numérico, Angular guarda en
-   *  target.value un string interno con prefijo de índice ("2: 10"), pero el
-   *  ngModel ya recibe el número correcto — NO normalizar desde target.value
-   *  porque Number("2: 10") = NaN y rompería el botón Confirmar. */
-  onChangeParaderoDescenso(_evt: Event): void {
-    // ngModel ya tiene el valor correcto; nada que hacer aquí.
-  }
+  onChangeParaderoDescenso(_evt: Event): void {}
 
-  /** Comparación robusta para destacar la card seleccionada.
-   *  Evita el bug de "todas seleccionadas" cuando ambos lados son undefined/null. */
   esParaderoSeleccionado(rutaParaderoId: number | null | undefined): boolean {
     if (rutaParaderoId == null || this.rutaParaderoDescensoId == null) return false;
     return Number(this.rutaParaderoDescensoId) === Number(rutaParaderoId);
   }
 
-  /** trackBy para *ngFor — mejora rendering y previene re-creación de cards. */
   trackByRutaParaderoId = (_index: number, p: any): number => p.rutaParaderoId;
 
   confirmarDescenso(): void {

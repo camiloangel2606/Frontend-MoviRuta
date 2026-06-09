@@ -97,7 +97,12 @@ export class AppComponent implements OnInit, OnDestroy {
           route: '/admin/reportes/ingresos',
           roles: ['ADMINISTRADOR', 'SUPERVISOR']
         },
-        { label: 'Demografía', icon: 'people', route: '/admin/reportes/demografia' },
+        {
+          label: 'Demografía',
+          icon: 'people',
+          route: '/admin/reportes/demografia',
+          roles: ['ADMINISTRADOR', 'SUPERVISOR']
+        },
         { label: 'Incidentes', icon: 'warning', route: '/admin/reportes/incidentes' },
       ]
     },

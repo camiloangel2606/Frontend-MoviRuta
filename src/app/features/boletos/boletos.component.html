@@ -21,81 +21,119 @@
           <mat-tab label="Simular Abordaje">
             <div class="tab-contenido-interno">
 
-              <!-- Saldo -->
-              <mat-card style="margin-bottom:16px;box-shadow:none;border:1px solid #e2e8f0;">
-                <mat-card-content style="padding:16px;">
-                  <span style="font-size:11px;text-transform:uppercase;color:#64748b;
-                               font-weight:700;display:block;">Saldo Prepago</span>
-                  <h1 style="font-size:30px;font-weight:800;color:#0f172a;margin:4px 0;">
-                    ${{ metodosPago[0]?.saldo | number:'1.2-2' }}
-                  </h1>
-                  <span style="font-size:11px;color:#94a3b8;font-family:monospace;">
-                    {{ metodosPago[0]?.identificador }}
-                  </span>
-                </mat-card-content>
-              </mat-card>
-
-              <p class="texto-ayuda-gps">🎯 Selecciona la programación y tu paradero de origen:</p>
-
-              <div class="scroll-lista-elementos">
-
-                <!-- 1. Programación activa -->
-                <mat-form-field appearance="outline" class="buscador-full">
-                  <mat-label>Programación activa (Ruta + Bus)</mat-label>
-                  <mat-select [(ngModel)]="programacionId"
-                              (selectionChange)="alSeleccionarProgramacion()">
-                    <mat-option *ngFor="let p of programaciones" [value]="p.id">
-                      🗺️ {{ p.ruta?.nombre }} — 🚌 {{ p.bus?.placa }}
-                      ({{ p.horaSalida }})
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-
-                <!-- Detalle de la programación seleccionada -->
-                <ng-container *ngIf="programacionId">
-                  <ng-container *ngFor="let p of programaciones">
-                    <div *ngIf="p.id === programacionId"
-                         style="background:#f8fafc;border-radius:10px;
-                                padding:12px 16px;margin-bottom:12px;
-                                font-size:13px;color:#374151;line-height:1.8;">
-                      <strong>Conductor:</strong>
-                      {{ p.conductorAsignado?.persona?.nombres }}
-                      {{ p.conductorAsignado?.persona?.apellidos }}<br/>
-                      <strong>Bus:</strong> {{ p.bus?.placa }} — {{ p.bus?.modelo }}<br/>
-                      <strong>Tarifa:</strong> ${{ p.ruta?.tarifa | number:'1.2-2' }}<br/>
-                      <strong>Capacidad disponible:</strong>
-                      {{ p.bus?.capacidadMaxima }} asientos
-                    </div>
-                  </ng-container>
-                </ng-container>
-
-                <!-- 2. Paradero de Origen -->
-                <mat-form-field appearance="outline" class="buscador-full">
-                  <mat-label>Paradero de Origen (donde se sube)</mat-label>
-                  <mat-select [(ngModel)]="rutaParaderoOrigenId"
-                              [disabled]="paraderosDeRuta.length === 0">
-                    <mat-option *ngFor="let p of paraderosDeRuta"
-                                [value]="p.rutaParaderoId">
-                      📍 #{{ p.orden }} — {{ p.nombre }}
-                      <span *ngIf="p.tipo">[{{ p.tipo }}]</span>
-                    </mat-option>
-                  </mat-select>
-                  <mat-hint *ngIf="programacionId && paraderosDeRuta.length === 0">
-                    Esta ruta no tiene paraderos asignados.
-                  </mat-hint>
-                </mat-form-field>
-
-                <button
-                  mat-flat-button color="primary" class="btn-gps-moviruta"
-                  (click)="registrarAbordaje()"
-                  [disabled]="!programacionId || !rutaParaderoOrigenId"
-                  style="width:100%;padding:24px 16px;display:flex;
-                         align-items:center;justify-content:center;gap:8px;">
-                  <mat-icon>sensors</mat-icon>
-                  Registrar Abordaje
-                </button>
-
+              <!-- Cargando sesión -->
+              <div *ngIf="cargandoSesion"
+                   style="padding:24px;text-align:center;color:#64748b;font-size:13px;">
+                Cargando datos de tu cuenta...
               </div>
+
+              <!-- Sin ciudadano resuelto -->
+              <div *ngIf="!cargandoSesion && !ciudadanoId"
+                   style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;
+                          padding:14px 16px;font-size:13px;color:#991b1b;margin-bottom:16px;">
+                No se encontró tu perfil en el sistema. Contacta con soporte.
+              </div>
+
+              <ng-container *ngIf="!cargandoSesion && ciudadanoId">
+
+                <!-- Métodos de pago disponibles -->
+                <div *ngIf="metodosPagoCiudadano.length === 0"
+                     style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;
+                            padding:14px 16px;font-size:13px;color:#78350f;margin-bottom:16px;">
+                  No tienes métodos de pago registrados. Recarga tu tarjeta primero.
+                </div>
+
+                <!-- Selector de método de pago -->
+                <mat-form-field *ngIf="metodosPagoCiudadano.length > 0"
+                                appearance="outline" class="buscador-full"
+                                style="margin-bottom:8px;">
+                  <mat-label>Método de pago</mat-label>
+                  <mat-select [(ngModel)]="metodoPagoSeleccionadoId">
+                    <mat-option *ngFor="let m of metodosPagoCiudadano" [value]="m.id">
+                      {{ m.metodoPago?.nombre }} — {{ m.identificador }}
+                      (${{ m.saldo | number:'1.2-2' }})
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <!-- Saldo del método seleccionado -->
+                <mat-card *ngIf="metodoPagoSeleccionado"
+                          style="margin-bottom:16px;box-shadow:none;border:1px solid #e2e8f0;">
+                  <mat-card-content style="padding:16px;">
+                    <span style="font-size:11px;text-transform:uppercase;color:#64748b;
+                                 font-weight:700;display:block;">Saldo disponible</span>
+                    <h1 style="font-size:30px;font-weight:800;color:#0f172a;margin:4px 0;">
+                      ${{ metodoPagoSeleccionado.saldo | number:'1.2-2' }}
+                    </h1>
+                    <span style="font-size:11px;color:#94a3b8;font-family:monospace;">
+                      {{ metodoPagoSeleccionado.metodoPago?.nombre }} —
+                      {{ metodoPagoSeleccionado.identificador }}
+                    </span>
+                  </mat-card-content>
+                </mat-card>
+
+                <p class="texto-ayuda-gps">🎯 Selecciona la programación y tu paradero de origen:</p>
+
+                <div class="scroll-lista-elementos">
+
+                  <!-- 1. Programación activa -->
+                  <mat-form-field appearance="outline" class="buscador-full">
+                    <mat-label>Programación activa (Ruta + Bus)</mat-label>
+                    <mat-select [(ngModel)]="programacionId"
+                                (selectionChange)="alSeleccionarProgramacion()">
+                      <mat-option *ngFor="let p of programaciones" [value]="p.id">
+                        🗺️ {{ p.ruta?.nombre }} — 🚌 {{ p.bus?.placa }}
+                        ({{ p.horaSalida }})
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <!-- Detalle de la programación seleccionada -->
+                  <ng-container *ngIf="programacionId">
+                    <ng-container *ngFor="let p of programaciones">
+                      <div *ngIf="p.id === programacionId"
+                           style="background:#f8fafc;border-radius:10px;
+                                  padding:12px 16px;margin-bottom:12px;
+                                  font-size:13px;color:#374151;line-height:1.8;">
+                        <strong>Conductor:</strong>
+                        {{ p.conductorAsignado?.persona?.nombres }}
+                        {{ p.conductorAsignado?.persona?.apellidos }}<br/>
+                        <strong>Bus:</strong> {{ p.bus?.placa }} — {{ p.bus?.modelo }}<br/>
+                        <strong>Tarifa:</strong> ${{ p.ruta?.tarifa | number:'1.2-2' }}<br/>
+                        <strong>Capacidad disponible:</strong>
+                        {{ p.bus?.capacidadMaxima }} asientos
+                      </div>
+                    </ng-container>
+                  </ng-container>
+
+                  <!-- 2. Paradero de Origen -->
+                  <mat-form-field appearance="outline" class="buscador-full">
+                    <mat-label>Paradero de Origen (donde se sube)</mat-label>
+                    <mat-select [(ngModel)]="rutaParaderoOrigenId"
+                                [disabled]="paraderosDeRuta.length === 0">
+                      <mat-option *ngFor="let p of paraderosDeRuta"
+                                  [value]="p.rutaParaderoId">
+                        📍 #{{ p.orden }} — {{ p.nombre }}
+                        <span *ngIf="p.tipo">[{{ p.tipo }}]</span>
+                      </mat-option>
+                    </mat-select>
+                    <mat-hint *ngIf="programacionId && paraderosDeRuta.length === 0">
+                      Esta ruta no tiene paraderos asignados.
+                    </mat-hint>
+                  </mat-form-field>
+
+                  <button
+                    mat-flat-button color="primary" class="btn-gps-moviruta"
+                    (click)="registrarAbordaje()"
+                    [disabled]="!programacionId || !rutaParaderoOrigenId || !metodoPagoSeleccionadoId"
+                    style="width:100%;padding:24px 16px;display:flex;
+                           align-items:center;justify-content:center;gap:8px;">
+                    <mat-icon>sensors</mat-icon>
+                    Registrar Abordaje
+                  </button>
+
+                </div>
+              </ng-container>
             </div>
           </mat-tab>
         </mat-tab-group>

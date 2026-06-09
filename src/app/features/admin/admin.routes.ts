@@ -57,10 +57,10 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: 'reportes/demografia',
-    loadComponent: () => import('../../shared/components/proximamente/proximamente.component')
-      .then(m => m.ProximamenteComponent),
+    loadComponent: () => import('./components/reportes/reporte-demografia/reporte-demografia.component')
+      .then(m => m.ReporteDemografiaComponent),
     canActivate: [authGuard, roleGuard],
-    data: { titulo: 'Reporte Demográfico', roles: ADMIN_EMPRESA_ROLES }
+    data: { roles: ADMIN_EMPRESA_ROLES }
   },
   {
     path: 'reportes/incidentes',

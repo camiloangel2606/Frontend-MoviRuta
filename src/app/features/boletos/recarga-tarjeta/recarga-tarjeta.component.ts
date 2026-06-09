@@ -82,8 +82,8 @@ export class RecargaTarjetaComponent implements OnInit, OnDestroy {
       ? this.api.get<any[]>(`${environment.negocioUrl}/metodo-pago-ciudadano?ciudadanoId=${this.ciudadanoId}`)
       : this.api.get<any>(`${environment.negocioUrl}/persona/security/${securityUserId}`).pipe(
           switchMap((persona: any) => {
-            this.ciudadanoId = persona.id;
-            return this.api.get<any[]>(`${environment.negocioUrl}/metodo-pago-ciudadano?ciudadanoId=${persona.id}`);
+            this.ciudadanoId = persona.ciudadanoId;   // ciudadanoId, no persona.id
+            return this.api.get<any[]>(`${environment.negocioUrl}/metodo-pago-ciudadano?ciudadanoId=${this.ciudadanoId}`);
           }),
         );
 

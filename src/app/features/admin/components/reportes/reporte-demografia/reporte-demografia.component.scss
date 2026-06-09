@@ -1,0 +1,152 @@
+.page-container {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text-primary);
+
+  .title-icon {
+    color: var(--color-primary);
+  }
+}
+
+.page-subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filtros-card {
+  border-radius: 12px;
+}
+
+.filtros-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ruta-field {
+  min-width: 240px;
+  flex: 1 1 240px;
+}
+
+.rango-field {
+  min-width: 280px;
+  flex: 1 1 280px;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.chart-card,
+.table-card {
+  border-radius: 12px;
+}
+
+.section-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chart-wrapper {
+  background: #fff;
+}
+
+.chart {
+  width: 100%;
+  height: 380px;
+}
+
+.total-pasajeros {
+  margin: 12px 0 0;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.demografia-table {
+  width: 100%;
+
+  .num-col {
+    text-align: right;
+  }
+
+  .total-row {
+    font-weight: 700;
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+}
+
+.var-up,
+.var-down {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.var-up {
+  color: #2e7d32;
+}
+
+.var-down {
+  color: #c62828;
+}
+
+.var-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 960px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-header {
+    align-items: flex-start;
+  }
+
+  .chart {
+    height: 300px;
+  }
+}

@@ -108,9 +108,9 @@ export class ProfileService {
     return this.http.post<any>(`${this.nestApiUrl}/persona`, personaData);
   }
 
-  // Actualiza la fecha de nacimiento usando el ID numérico que comparten persona y ciudadano
-  updateFechaNacimiento(ciudadanoId: string, fechaNacimiento: string): Observable<any> {
-    return this.http.patch(`${this.nestApiUrl}/ciudadano/${ciudadanoId}`, { fechaNacimiento });
+  // Actualiza la fecha de nacimiento buscando el ciudadano por su persona_id
+  updateFechaNacimiento(personaId: string, fechaNacimiento: string): Observable<any> {
+    return this.http.patch(`${this.nestApiUrl}/ciudadano/by-persona/${personaId}`, { fechaNacimiento });
   }
   // ==========================================
   // ROLES Y CONDUCTOR
