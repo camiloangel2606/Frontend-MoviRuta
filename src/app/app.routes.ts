@@ -61,12 +61,12 @@
     {
       path: 'conductor',
       canActivate: [authGuard, roleGuard],
-      data: { roles: ['CONDUCTOR', 'ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'] },
+      data: { roles: ['CONDUCTOR', 'ADMINISTRADOR', 'SUPERVISOR'] },
       children: [
         {
           path: 'dashboard',
           loadComponent: () => import('./features/conductor/dashboard/dashboard-conductor.component').then(m => m.DashboardConductorComponent),
-          data: { roles: ['CONDUCTOR', 'ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'] }
+          data: { roles: ['CONDUCTOR', 'ADMINISTRADOR', 'SUPERVISOR'] }
         },
         {
           path: 'incidente/nuevo',
@@ -80,7 +80,11 @@
       path: 'admin',
       loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES),
       canActivate: [authGuard, roleGuard],
-      data: { roles: ['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'] }
+      data: { roles: ['ADMINISTRADOR', 'SUPERVISOR'] }
+    },
+    {
+      path: 'acceso-denegado',
+      loadComponent: () => import('./features/acceso-denegado/acceso-denegado.component').then(m => m.AccesoDenegadoComponent)
     },
     {
       path: 'test',

@@ -8,29 +8,24 @@ export const roleGuard: CanActivateFn = (route, _state) => {
   const router = inject(Router);
 
   if (!auth.isAuthenticated()) {
-    SecurityLogger.warn('Guard', 'Acceso admin bloqueado por falta de autenticacion');
+    SecurityLogger.warn('Guard', 'Acceso bloqueado por falta de autenticacion');
     router.navigate(['/login']);
     return false;
   }
 
   const requiredRoles: string[] = route.data?.['roles'] || [];
-  if (requiredRoles.length === 0) {
-    return true;
-  }
-
   const userRoles = auth.getUserRoles();
-  SecurityLogger.info('Roles', 'Evaluando acceso por roles', { requiredRoles, userRoles });
-  const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role));
 
-  if (hasRequiredRole) {
-    SecurityLogger.info('Roles', 'Acceso concedido por rol');
+  // TODO: quitar este console.log cuando se valide la HU-2014 con un usuario SUPERVISOR.
+  // eslint-disable-next-line no-console
+  console.log('[roleGuard]', { requiredRoles, userRoles });
+
+  if (auth.hasAnyRole(requiredRoles)) {
+    SecurityLogger.info('Roles', 'Acceso concedido por rol', { requiredRoles, userRoles });
     return true;
   }
 
   SecurityLogger.warn('Guard', 'Acceso denegado por roles insuficientes', { requiredRoles, userRoles });
-  router.navigate(['/dashboard'], {
-    queryParams: { error: 'access-denied' }
-  });
-
+  router.navigate(['/acceso-denegado']);
   return false;
 };

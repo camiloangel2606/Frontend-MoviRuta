@@ -16,6 +16,7 @@
             <a
               mat-list-item
               *ngFor="let item of group.items"
+              [hidden]="item.roles && !hasAnyRole(item.roles)"
               [routerLink]="item.route"
               routerLinkActive="active-link"
               [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' || item.route === '/profile' }"

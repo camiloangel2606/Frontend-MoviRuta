@@ -1,0 +1,116 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-info">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">payments</mat-icon>
+        Reporte de Ingresos
+      </h1>
+      <p class="page-subtitle">
+        Ingresos por método de pago. Solo se cuentan boletos completados.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <mat-button-toggle-group
+        [formControl]="rangoCtrl"
+        appearance="legacy"
+        class="rango-toggle"
+        aria-label="Rango del reporte"
+      >
+        <mat-button-toggle [value]="3">3 meses</mat-button-toggle>
+        <mat-button-toggle [value]="6">6 meses</mat-button-toggle>
+        <mat-button-toggle [value]="12">12 meses</mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <button
+        mat-stroked-button
+        color="primary"
+        (click)="exportarCsv()"
+        [disabled]="!hayDatos || isLoading"
+      >
+        <mat-icon>download</mat-icon>
+        Exportar CSV
+      </button>
+    </div>
+  </div>
+
+  @if (isLoading) {
+    <mat-card class="chart-card">
+      <app-skeleton type="text" [lines]="3"></app-skeleton>
+      <app-skeleton type="card"></app-skeleton>
+    </mat-card>
+    <mat-card class="table-card">
+      <app-skeleton type="text" [lines]="5"></app-skeleton>
+    </mat-card>
+  } @else if (!hayDatos) {
+    <app-empty-state
+      icon="insights"
+      title="Sin ingresos en el período"
+      subtitle="No hay ingresos en el período seleccionado.">
+    </app-empty-state>
+  } @else {
+    <mat-card class="resumen-card">
+      <mat-card-content>
+        <div class="resumen-row">
+          <div class="resumen-item">
+            <span class="resumen-label">Total del período</span>
+            <span class="resumen-valor">
+              {{ datos!.totalGeneral | currency:'COP':'symbol':'1.0-0' }}
+            </span>
+          </div>
+          <div class="resumen-item">
+            <span class="resumen-label">Rango</span>
+            <span class="resumen-valor secundario">
+              {{ datos!.rango.desde }} → {{ datos!.rango.hasta }}
+            </span>
+          </div>
+          <div class="resumen-item">
+            <span class="resumen-label">Métodos de pago</span>
+            <span class="resumen-valor secundario">{{ datos!.totales.length }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-content>
+        <h2 class="section-title">Distribución mensual (barras apiladas)</h2>
+        <div
+          echarts
+          [options]="chartOptions!"
+          class="chart"
+          [autoResize]="true"
+        ></div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="table-card">
+      <mat-card-content>
+        <h2 class="section-title">Totales por método de pago</h2>
+        <table mat-table [dataSource]="datos!.totales" class="ingresos-table">
+          <ng-container matColumnDef="metodo">
+            <th mat-header-cell *matHeaderCellDef>Método de pago</th>
+            <td mat-cell *matCellDef="let row">{{ row.metodoPago }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="total">
+            <th mat-header-cell *matHeaderCellDef class="num-col">Total</th>
+            <td mat-cell *matCellDef="let row" class="num-col">
+              {{ row.total | currency:'COP':'symbol':'1.0-0' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="porcentaje">
+            <th mat-header-cell *matHeaderCellDef class="num-col">Porcentaje</th>
+            <td mat-cell *matCellDef="let row" class="num-col">
+              {{ row.porcentaje }} %
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+          <tr mat-row *matRowDef="let row; columns: columnas;"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

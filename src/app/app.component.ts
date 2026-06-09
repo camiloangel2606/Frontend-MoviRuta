@@ -14,6 +14,7 @@ interface NavItemDef {
   label: string;
   icon: string;
   route: string;
+  roles?: string[];
 }
 
 interface NavGroup {
@@ -78,7 +79,7 @@ export class AppComponent implements OnInit, OnDestroy {
     },
     {
       label: 'Administración',
-      roles: ['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'],
+      roles: ['ADMINISTRADOR', 'SUPERVISOR'],
       items: [
         { label: 'Flota de Buses', icon: 'directions_bus', route: '/admin/buses' },
         { label: 'Paraderos', icon: 'place', route: '/admin/paraderos' },
@@ -88,16 +89,21 @@ export class AppComponent implements OnInit, OnDestroy {
     },
     {
       label: 'Reportes',
-      roles: ['ADMIN', 'ADMIN_EMPRESA', 'SUPERVISOR'],
+      roles: ['ADMINISTRADOR', 'SUPERVISOR'],
       items: [
-        { label: 'Ingresos', icon: 'payments', route: '/admin/reportes/ingresos' },
+        {
+          label: 'Ingresos',
+          icon: 'payments',
+          route: '/admin/reportes/ingresos',
+          roles: ['ADMINISTRADOR', 'SUPERVISOR']
+        },
         { label: 'Demografía', icon: 'people', route: '/admin/reportes/demografia' },
         { label: 'Incidentes', icon: 'warning', route: '/admin/reportes/incidentes' },
       ]
     },
     {
       label: 'Sistema',
-      roles: ['ADMIN'],
+      roles: ['ADMINISTRADOR'],
       items: [
         { label: 'Usuarios', icon: 'groups', route: '/admin/users' },
         { label: 'Roles', icon: 'verified_user', route: '/admin/roles' },
@@ -161,8 +167,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   hasAnyRole(roles: string[]): boolean {
-    if (roles.length === 0) return true;
-    return roles.some(role => this.userRoles.includes(role));
+    return this.authService.hasAnyRole(roles);
   }
 
   get showShell(): boolean {

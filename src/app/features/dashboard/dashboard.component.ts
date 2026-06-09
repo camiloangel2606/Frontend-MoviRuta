@@ -124,8 +124,9 @@ export class DashboardComponent implements OnInit {
   }
 
   get isAdmin(): boolean {
-    return this.userRoles.includes('Administrador Sistema') ||
-           this.userRoles.includes('ADMIN');
+    return this.userRoles
+      .map(r => (r ?? '').toUpperCase())
+      .includes('ADMINISTRADOR');
   }
 
   getProviderDisplay(provider: string | undefined): string {

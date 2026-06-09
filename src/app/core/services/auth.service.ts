@@ -248,11 +248,24 @@ export class AuthService {
   }
 
   hasRole(role: string): boolean {
-    return this.getUserRoles().includes(role);
+    if (!role) return false;
+    const target = role.toUpperCase();
+    return this.getUserRoles().some(r => (r ?? '').toUpperCase() === target);
+  }
+
+  /**
+   * Fuente única de verdad para chequeos de rol del frontend.
+   * Normaliza ambos lados a UPPERCASE para evitar mismatch por capitalización.
+   * Devuelve true si el array `requiredRoles` está vacío (sin restricción).
+   */
+  hasAnyRole(requiredRoles: string[] | null | undefined): boolean {
+    if (!requiredRoles || requiredRoles.length === 0) return true;
+    const userRoles = this.getUserRoles().map(r => (r ?? '').toUpperCase());
+    return requiredRoles.some(r => userRoles.includes((r ?? '').toUpperCase()));
   }
 
   isAdmin(): boolean {
-    return this.getUserRoles().includes('ADMIN');
+    return this.hasRole('ADMINISTRADOR');
   }
 
   isAuthenticated(): boolean {

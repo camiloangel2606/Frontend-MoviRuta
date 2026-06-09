@@ -34,7 +34,7 @@ export const useRoles = () => {
     roles$: authService.userRoles$,
     
     // Helpers para roles específicos
-    isAdmin: authService.hasRole('ADMIN'),
+    isAdmin: authService.hasRole('ADMINISTRADOR'),
     isModerator: authService.hasRole('MODERADOR'),
     isCitizen: authService.hasRole('CIUDADANO'),
     
