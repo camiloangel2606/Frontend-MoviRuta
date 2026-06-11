@@ -1,0 +1,106 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-info">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">trending_up</mat-icon>
+        Tendencia de Incidentes
+      </h1>
+      <p class="page-subtitle">
+        Evolución mensual de incidentes por tipo. Haz clic en la leyenda para ocultar/mostrar series.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <mat-form-field appearance="outline" class="empresa-select">
+        <mat-label>Empresa</mat-label>
+        <mat-select [formControl]="empresaCtrl">
+          <mat-option [value]="null">Todas las empresas</mat-option>
+          @for (empresa of empresas; track empresa.id) {
+            <mat-option [value]="empresa.id">{{ empresa.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-button-toggle-group
+        [formControl]="mesesCtrl"
+        appearance="legacy"
+        class="rango-toggle"
+        aria-label="Rango del reporte"
+      >
+        <mat-button-toggle [value]="3">3 meses</mat-button-toggle>
+        <mat-button-toggle [value]="6">6 meses</mat-button-toggle>
+        <mat-button-toggle [value]="12">12 meses</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+  </div>
+
+  @if (isLoading) {
+    <mat-card class="chart-card">
+      <mat-card-content>
+        <app-skeleton type="text" [lines]="2"></app-skeleton>
+        <app-skeleton type="card"></app-skeleton>
+      </mat-card-content>
+    </mat-card>
+  } @else if (!hayDatos) {
+    <app-empty-state
+      icon="trending_up"
+      title="Sin incidentes en el período"
+      subtitle="No hay incidentes registrados en el período y empresa seleccionados.">
+    </app-empty-state>
+  } @else {
+    <mat-card class="resumen-card">
+      <mat-card-content>
+        <div class="resumen-row">
+          <div class="resumen-item">
+            <span class="resumen-label">Total incidentes en el período</span>
+            <span class="resumen-valor">{{ totalIncidentesPeriodo }}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="resumen-label">Meses con incidentes</span>
+            <span class="resumen-valor secundario">{{ mesesConDatos }} / {{ mesesCtrl.value }}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="resumen-label">Empresa</span>
+            <span class="resumen-valor secundario">{{ nombreEmpresaSeleccionada }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-content>
+        <h2 class="section-title">Incidentes por tipo y mes</h2>
+        <div
+          echarts
+          [options]="chartOptions!"
+          class="chart"
+          [autoResize]="true"
+        ></div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="leyenda-card">
+      <mat-card-content>
+        <h2 class="section-title">Tipos de incidente</h2>
+        <div class="tipo-list">
+          <div class="tipo-item">
+            <span class="tipo-dot" style="background:#EF5350"></span>
+            <span>Mecánicos — fallas de motor, frenos u otras partes mecánicas</span>
+          </div>
+          <div class="tipo-item">
+            <span class="tipo-dot" style="background:#FF7043"></span>
+            <span>Accidentes — colisiones o eventos de tráfico</span>
+          </div>
+          <div class="tipo-item">
+            <span class="tipo-dot" style="background:#FFA726"></span>
+            <span>Eléctricos — fallos en sistema eléctrico o electrónico</span>
+          </div>
+          <div class="tipo-item">
+            <span class="tipo-dot" style="background:#78909C"></span>
+            <span>Otros — incidentes que no clasifican en las categorías anteriores</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

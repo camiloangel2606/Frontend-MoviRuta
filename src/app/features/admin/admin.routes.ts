@@ -64,8 +64,8 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: 'reportes/incidentes',
-    loadComponent: () => import('./components/incidentes-bus/incidentes-bus.component')
-      .then(m => m.IncidentesBusComponent),
+    loadComponent: () => import('./components/reportes/reporte-tendencia-incidentes/reporte-tendencia-incidentes.component')
+      .then(m => m.ReporteTendenciaIncidentesComponent),
     canActivate: [authGuard, roleGuard],
     data: { roles: ADMIN_EMPRESA_ROLES }
   },
